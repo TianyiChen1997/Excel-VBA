@@ -1,0 +1,14 @@
+Sub Rotor_Buy()
+'   After pasting the purchased parts manually onto the main sheet,
+'   we remove duplicate, then vlookup onto the purchased column
+    With Worksheets("ROTOR SUMMARY")
+        .Range(Worksheets("ROTOR SUMMARY").Range("CS3"), Worksheets("ROTOR SUMMARY").Range("CS3").End(xlDown)).Copy Worksheets("ROTOR SUMMARY").Range("CQ3")
+        .Range("CQ3:CQ" & Worksheets("ROTOR SUMMARY").Range("CQ" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("CR3").FormulaR1C1 = "=SUMIF(R3C97:R19C97,RC[-1],R3C98:R19C98)"
+        .Range("CR3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CR3:CR" & Worksheets("ROTOR SUMMARY").Range("CQ" & Rows.Count).End(xlUp).Row)
+        .Range("CJ3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-87],C95:C96,2,FALSE),"""")"
+        .Range("CJ3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CJ3:CJ" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+    End With
+
+End Sub
