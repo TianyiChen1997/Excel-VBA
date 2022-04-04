@@ -1,0 +1,167 @@
+Sub Rotor_Weekly()
+'
+'   First, edit both CNZ and ONZ, TA and PBI
+'   ONZ PBI: copy & paste, remove duplicates, and sumif
+    With Worksheets("ONZ PBI")
+        .Range(Worksheets("ONZ PBI").Range("A2"), Worksheets("ONZ PBI").Range("A2").End(xlDown)).Copy Worksheets("ONZ PBI").Range("H2")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I2").FormulaR1C1 = "=SUMIF(C[-8]:C[-8],RC[-1],C[-4]:C[-4])"
+        .Range("I2").AutoFill Destination:=Worksheets("ONZ PBI").Range("I2:I" & Worksheets("ONZ PBI").Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'   CNZ PBI: copy & paste, remove duplicates, sumif, and replace
+    With Worksheets("CNZ PBI")
+        .Columns("A").Replace What:="cnz", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+        .Range(Worksheets("CNZ PBI").Range("A2"), Worksheets("CNZ PBI").Range("A2").End(xlDown)).Copy Worksheets("CNZ PBI").Range("H2")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I2").FormulaR1C1 = "=SUMIF(C[-8]:C[-8],RC[-1],C[-4]:C[-4])"
+        .Range("I2").AutoFill Destination:=Worksheets("CNZ PBI").Range("I2:I" & Worksheets("CNZ PBI").Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'   ONZ TA: no changes needed
+'   CNZ TA: replace
+    With Worksheets("CNZ TA")
+        .Columns("A").Replace What:="cnz", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+    End With
+'
+'
+'   Second, main sheet change ONZ and CNZ TA and PBI sales
+    With Worksheets("ROTOR SUMMARY")
+'       ONZ TA
+        .Range("E3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-4],'ONZ TA'!C[-5]:C[-4],2,FALSE),0)"
+        .Range("E3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("E3:E" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+'       CNZ TA
+        .Range("F3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-4],'CNZ TA'!C[-5]:C[-4],2,FALSE),0)"
+        .Range("F3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("F3:F" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+        .Columns("E:F").Copy
+        .Columns("E:F").PasteSpecial xlPasteValues
+'       ONZ PBI
+        .Range("AS3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-44],'ONZ PBI'!C[-37]:C[-36],2,FALSE),0)"
+        .Range("AS3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("AS3:AS" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+'       CNZ PBI
+        .Range("AT3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-44],'CNZ PBI'!C[-38]:C[-37],2,FALSE),0)"
+        .Range("AT3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("AT3:AT" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("AS3", Worksheets("ROTOR SUMMARY").Range("AS3").End(xlDown)).Copy
+        .Range("AS3", Worksheets("ROTOR SUMMARY").Range("AS3").End(xlDown)).PasteSpecial xlPasteValues
+        .Range("AT3", Worksheets("ROTOR SUMMARY").Range("AT3").End(xlDown)).Copy
+        .Range("AT3", Worksheets("ROTOR SUMMARY").Range("AT3").End(xlDown)).PasteSpecial xlPasteValues
+   End With
+'
+'
+'   Lastly, clear old contents
+    With Worksheets("ROTOR SUMMARY")
+        .Columns("CG:CG").ClearContents
+        .Range("CG2").FormulaR1C1 = "Buy QTY"
+        .Range("CG2").Font.Color = -1003520
+        .Columns("CJ:CJ").ClearContents
+        .Range("CJ2").FormulaR1C1 = "Purchased"
+        .Range("CJ2").Font.Color = -16776961
+    End With
+    Worksheets("Buy").Range("A3:AA139").ClearContents
+    Worksheets("ONZ TA").Columns("A:B").ClearContents
+    Worksheets("ONZ PBI").Columns("A:I").ClearContents
+    Worksheets("CNZ TA").Columns("A:B").ClearContents
+    Worksheets("CNZ PBI").Columns("A:I").ClearContents
+    Worksheets("ROTOR SUMMARY").Range("BY3").Select
+
+End Sub
+Sub Pad_Weekly()
+'
+'   First, edit all CDM, AFN, and CDP TA, and both CDM and AFN PBI
+'   CDM TA: replace
+    With Worksheets("CDM TA")
+        .Columns("A").Replace What:="cdm", Replacement:=""
+        .Columns("A").Replace What:="p", Replacement:=""
+    End With
+'   AFN TA: replace
+    Worksheets("AFN TA").Columns("A").Replace What:="afn", Replacement:=""
+'   CDP TA: replace
+    With Worksheets("CDP TA")
+        .Columns("A").Replace What:="cdp", Replacement:=""
+        .Columns("A").Replace What:="p", Replacement:=""
+    End With
+'   CDM PBI: copy& paste, remove duplicates, and sumif
+    With Worksheets("CDM PBI")
+        .Range(Worksheets("CDM PBI").Range("A2"), Worksheets("CDM PBI").Range("A2").End(xlDown)).Copy Worksheets("CDM PBI").Range("H2")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I2").FormulaR1C1 = "=SUMIF(C[-8]:C[-8],RC[-1],C[-4]:C[-4])"
+        .Range("I2").AutoFill Destination:=Worksheets("CDM PBI").Range("I2:I" & Worksheets("CDM PBI").Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'   AFN PBI: replace
+    Worksheets("AFN PBI").Columns("A").Replace What:="afn", Replacement:=""
+'
+'
+'   Second, main sheet change CDM, AFN, CDP TA and PBI sales
+    With Worksheets("PAD Summary")
+'       CDM TA
+        .Range("C3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-1],'CDM TA'!C[-2]:C[-1],2,FALSE),0)"
+        .Range("C3").AutoFill Destination:=Worksheets("PAD Summary").Range("C3:C" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+'       AFN TA
+        .Range("P3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-14],'AFN TA'!C[-15]:C[-14],2,FALSE),0)"
+        .Range("P3").AutoFill Destination:=Worksheets("PAD Summary").Range("P3:P" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+'       CDP TA
+        .Range("Q3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-15],'CDP TA'!C[-16]:C[-15],2,FALSE),0)"
+        .Range("Q3").AutoFill Destination:=Worksheets("PAD Summary").Range("Q3:Q" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+        .Columns("C:C").Copy
+        .Columns("C:C").PasteSpecial xlPasteValues
+        .Columns("P:Q").Copy
+        .Columns("P:Q").PasteSpecial xlPasteValues
+'       Primary TA
+        .Columns("T:T").Copy
+        .Columns("U:U").Insert Shift:=xlToRight
+        .Range("A:BB").AutoFilter Field:=21, Criteria1:="<>"
+        .Columns("U:U").Replace What:="(2way)", Replacement:=""
+        With .Range("V3:V" & Cells(Rows.Count, "V").End(xlUp).Row).SpecialCells(xlCellTypeVisible)
+            .Cells.FormulaR1C1 = "=IFERROR(VLOOKUP(RC[-1],'CDM TA'!C[-21]:C[-20],2,FALSE),0)"
+            .Cells.FillDown
+        End With
+        .Range("A:BB").AutoFilter Field:=21
+        .Columns("V:V").Copy
+        .Columns("V:V").PasteSpecial xlPasteValues
+        .Columns("U:U").Delete Shift:=xlToLeft
+'       AFN PBI
+        .Range("M3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-11],'AFN PBI'!C[-12]:C[-10],3,FALSE),0)"
+        .Range("M3").AutoFill Destination:=Worksheets("PAD Summary").Range("M3:M" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("M3", Worksheets("PAD Summary").Range("M3").End(xlDown)).Copy
+        .Range("M3", Worksheets("PAD Summary").Range("M3").End(xlDown)).PasteSpecial xlPasteValues
+'       CDM PBI
+        .Range("AJ3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-35],'CDM PBI'!C[-28]:C[-27],2,FALSE),0)"
+        .Range("AJ3").AutoFill Destination:=Worksheets("PAD Summary").Range("AJ3:AJ" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("AJ3", Worksheets("PAD Summary").Range("AJ3").End(xlDown)).Copy
+        .Range("AJ3", Worksheets("PAD Summary").Range("AJ3").End(xlDown)).PasteSpecial xlPasteValues
+    End With
+'
+'
+'   Lastly, clear old contents
+    With Worksheets("PAD Summary")
+        .Columns("AN:AO").ClearContents
+        .Range("AN2").FormulaR1C1 = "Buy QTY"
+        .Range("AN2").Font.Color = -4165632
+        .Range("AO2").FormulaR1C1 = "Purchased"
+        .Range("AO2").Font.Color = -16776961
+        .Columns("R:S").ClearContents
+        .Range("R1:S1").FormulaR1C1 = "Swap"
+        .Range("R2").FormulaR1C1 = "AFN to CDM"
+        .Range("S2").FormulaR1C1 = "CDP to CDM"
+        .Range("R1:S2").Font.Color = -4165632
+    End With
+    With Worksheets("Pad Restock")
+        .Range("A2:B22").ClearContents
+        .Range("A23:U59").ClearContents
+    End With
+    Worksheets("CDM TA").Columns("A:B").ClearContents
+    Worksheets("CDM PBI").Columns("A:I").ClearContents
+    Worksheets("AFN TA").Columns("A:B").ClearContents
+    Worksheets("AFN PBI").Columns("A:C").ClearContents
+    Worksheets("CDP TA").Columns("A:B").ClearContents
+    Worksheets("PAD Summary").Range("AK3").Select
+End Sub
