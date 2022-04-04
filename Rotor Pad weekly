@@ -1,5 +1,56 @@
 Sub Rotor_Weekly()
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+
+'   this is to change the days elapsed manually
+    Dim days As Integer
+    days = InputBox("How many days elapsed starting last month until today?", "Enter an integer", 30)
 '
+'   To get started, need to copy & and paste TA and PBI data onto the main workbook
+'   You may want to change your workbook name and file directory here
+    Dim main_workbook_name As String
+    Dim file_dir As String
+    main_workbook_name = "Rotor Summary test"
+    file_dir = "C:\Users\rustyw\Desktop\"
+    
+    Application.DisplayAlerts = False
+'   TA
+    Set ta = Workbooks.Open(file_dir & "ta.csv")
+    ActiveSheet.Range("A:B").Copy
+    Workbooks(main_workbook_name).Activate
+    Worksheets("TA").Range("A1").PasteSpecial xlPasteValues
+    ta.Close SaveChanges:=False
+'   ONZ PBI
+    Set onz = Workbooks.Open(file_dir & "onz.csv")
+    ActiveSheet.Range("A:E").Copy
+    Workbooks(main_workbook_name).Activate
+    Worksheets("ONZ PBI").Range("A1").PasteSpecial xlPasteValues
+    onz.Close SaveChanges:=False
+'   CNZ PBI
+    Set CNZ = Workbooks.Open(file_dir & "cnz.csv")
+    ActiveSheet.Range("A:E").Copy
+    Workbooks(main_workbook_name).Activate
+    Worksheets("CNZ PBI").Range("A1").PasteSpecial xlPasteValues
+    CNZ.Close SaveChanges:=False
+    Application.DisplayAlerts = True
+'   Then, filter TA to get ONZ TA and CNZ TA
+'   ONZ TA
+    With Worksheets("TA")
+        .Range("$A$1:$B$" & Worksheets("TA").Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*onz"
+        .Columns("A:B").Copy
+    End With
+    Worksheets("ONZ TA").Range("A1").PasteSpecial xlPasteValues
+'   CNZ TA
+    With Worksheets("TA")
+        .Range("$A$1:$B$" & Worksheets("TA").Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*cnz"
+        .Columns("A:B").Copy
+    End With
+    Worksheets("CNZ TA").Range("A1").PasteSpecial xlPasteValues
+    
+
+'   Now, time to update values
 '   First, edit both CNZ and ONZ, TA and PBI
 '   ONZ PBI: copy & paste, remove duplicates, and sumif
     With Worksheets("ONZ PBI")
@@ -25,7 +76,7 @@ Sub Rotor_Weekly()
     End With
 '
 '
-'   Second, main sheet change ONZ and CNZ TA and PBI sales
+'   Second, main sheet change ONZ and CNZ TA and PBI sales, and sort
     With Worksheets("ROTOR SUMMARY")
 '       ONZ TA
         .Range("E3").FormulaR1C1 = _
@@ -49,7 +100,19 @@ Sub Rotor_Weekly()
         .Range("AS3", Worksheets("ROTOR SUMMARY").Range("AS3").End(xlDown)).PasteSpecial xlPasteValues
         .Range("AT3", Worksheets("ROTOR SUMMARY").Range("AT3").End(xlDown)).Copy
         .Range("AT3", Worksheets("ROTOR SUMMARY").Range("AT3").End(xlDown)).PasteSpecial xlPasteValues
-   End With
+'       Change days based on today's date
+        .Range("CG1").FormulaR1C1 = days
+        .Range("BY3").FormulaR1C1 = "=(RC[-33]+RC[-30])/" & days & "*7"
+        .Range("BY3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("BY3:BY" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("BZ3").FormulaR1C1 = "=(RC[-36]+RC[-33])/" & days & "*7"
+        .Range("BZ3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("BZ3:BZ" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+'       Sort LP qty
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("CC2:CC" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row), Order:=xlDescending
+            .Apply
+        End With
+    End With
 '
 '
 '   Lastly, clear old contents
@@ -61,16 +124,86 @@ Sub Rotor_Weekly()
         .Range("CJ2").FormulaR1C1 = "Purchased"
         .Range("CJ2").Font.Color = -16776961
     End With
-    Worksheets("Buy").Range("A3:AA139").ClearContents
+    With Worksheets("Buy")
+        .Range("A3:AA139").ClearContents
+        .Range("A83:B83").Copy
+        .Range("A3:B82").PasteSpecial xlPasteFormats
+        .Range("A83:B83").Copy
+        .Range("A83:AA139").PasteSpecial xlPasteFormats
+    End With
+    Worksheets("TA").Columns("A:B").ClearContents
+    Worksheets("TA").Columns("A:B").ClearContents
     Worksheets("ONZ TA").Columns("A:B").ClearContents
     Worksheets("ONZ PBI").Columns("A:I").ClearContents
     Worksheets("CNZ TA").Columns("A:B").ClearContents
     Worksheets("CNZ PBI").Columns("A:I").ClearContents
-    Worksheets("ROTOR SUMMARY").Range("BY3").Select
-
+    
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    Worksheets("ROTOR SUMMARY").Activate
+    Range("CG3").Select
+    
 End Sub
 Sub Pad_Weekly()
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    
+'   this is to change the days elapsed manually
+    Dim days As Integer
+    days = InputBox("How many days elapsed starting last month until today?", "Enter an integer", 30)
 '
+'   To get started, need to copy & and paste TA and PBI data onto the main workbook
+'   You may want to change your workbook name and file directory here
+    Dim main_workbook_name As String
+    Dim file_dir As String
+    main_workbook_name = "PAD Summary test"
+    file_dir = "C:\Users\rustyw\Desktop\"
+    
+    Application.DisplayAlerts = False
+'   TA
+    Set ta = Workbooks.Open(file_dir & "ta.csv")
+    ActiveSheet.Range("A:B").Copy
+    Workbooks(main_workbook_name).Activate
+    Worksheets("TA").Range("A1").PasteSpecial xlPasteValues
+    ta.Close SaveChanges:=False
+'   CDM PBI
+    Set cdm = Workbooks.Open(file_dir & "cdm.csv")
+    ActiveSheet.Range("A:E").Copy
+    Workbooks(main_workbook_name).Activate
+    Worksheets("CDM PBI").Range("A1").PasteSpecial xlPasteValues
+    cdm.Close SaveChanges:=False
+'   AFN PBI
+    Set afn = Workbooks.Open(file_dir & "afn.csv")
+    ActiveSheet.Range("A:C").Copy
+    Workbooks(main_workbook_name).Activate
+    Worksheets("AFN PBI").Range("A1").PasteSpecial xlPasteValues
+    afn.Close SaveChanges:=False
+    Application.DisplayAlerts = True
+'   Then, filter TA to get CDM, CDP and AFN TA
+'   CDM TA
+    With Worksheets("TA")
+        .Range("$A$1:$B$" & Worksheets("TA").Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=p*", _
+        Operator:=xlAnd, Criteria2:="=*cdm"
+        .Columns("A:B").Copy
+    End With
+    Worksheets("CDM TA").Range("A1").PasteSpecial xlPasteValues
+'   CPD TA
+    With Worksheets("TA")
+        .Range("$A$1:$B$" & Worksheets("TA").Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=p*", _
+        Operator:=xlAnd, Criteria2:="=*cdp"
+        .Columns("A:B").Copy
+    End With
+    Worksheets("CDP TA").Range("A1").PasteSpecial xlPasteValues
+'   AFN TA
+    With Worksheets("TA")
+        .Range("$A$1:$B$" & Worksheets("TA").Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=afn*", _
+        Operator:=xlAnd
+        .Columns("A:B").Copy
+    End With
+    Worksheets("AFN TA").Range("A1").PasteSpecial xlPasteValues
+
+
+'   Now, time to update values
 '   First, edit all CDM, AFN, and CDP TA, and both CDM and AFN PBI
 '   CDM TA: replace
     With Worksheets("CDM TA")
@@ -138,6 +271,16 @@ Sub Pad_Weekly()
         .Range("AJ3").AutoFill Destination:=Worksheets("PAD Summary").Range("AJ3:AJ" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
         .Range("AJ3", Worksheets("PAD Summary").Range("AJ3").End(xlDown)).Copy
         .Range("AJ3", Worksheets("PAD Summary").Range("AJ3").End(xlDown)).PasteSpecial xlPasteValues
+'       Change days based on today's date
+        .Range("AN1").FormulaR1C1 = days
+        .Range("AK3").FormulaR1C1 = "=(RC[-1]+RC[-2])/" & days & "*7"
+        .Range("AK3").AutoFill Destination:=Worksheets("PAD Summary").Range("AK3:AK" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+'       Sort weekly sales qty
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("AL2:AL" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row), Order:=xlDescending
+            .Apply
+        End With
     End With
 '
 '
@@ -157,11 +300,21 @@ Sub Pad_Weekly()
     With Worksheets("Pad Restock")
         .Range("A2:B22").ClearContents
         .Range("A23:U59").ClearContents
+        .Range("A23:B23").Copy
+        .Range("A23:U59").PasteSpecial xlPasteFormats
     End With
+    Worksheets("TA").Columns("A:B").ClearContents
+    Worksheets("TA").Columns("A:B").ClearContents
     Worksheets("CDM TA").Columns("A:B").ClearContents
     Worksheets("CDM PBI").Columns("A:I").ClearContents
     Worksheets("AFN TA").Columns("A:B").ClearContents
     Worksheets("AFN PBI").Columns("A:C").ClearContents
     Worksheets("CDP TA").Columns("A:B").ClearContents
     Worksheets("PAD Summary").Range("AK3").Select
+    
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    Worksheets("PAD Summary").Activate
+    Range("AN3").Select
+    
 End Sub
