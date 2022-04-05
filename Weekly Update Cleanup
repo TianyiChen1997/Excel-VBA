@@ -6,7 +6,6 @@ Sub Rotor_Cleanup()
 '
 
     Application.ScreenUpdating = False
-    Application.EnableEvents = False
 
 '   this is to change the days elapsed manually
     Dim days As Integer
@@ -145,7 +144,6 @@ Sub Rotor_Cleanup()
     Worksheets("CNZ PBI").Columns("A:I").ClearContents
     
     Application.ScreenUpdating = True
-    Application.EnableEvents = True
     Worksheets("ROTOR SUMMARY").Activate
     Range("CG3").Select
     
@@ -156,7 +154,6 @@ Sub Pad_Cleanup()
 '
     
     Application.ScreenUpdating = False
-    Application.EnableEvents = False
     
 '   this is to change the days elapsed manually
     Dim days As Integer
@@ -323,7 +320,6 @@ Sub Pad_Cleanup()
     Worksheets("PAD Summary").Range("AK3").Select
     
     Application.ScreenUpdating = True
-    Application.EnableEvents = True
     Worksheets("PAD Summary").Activate
     Range("AN3").Select
     
