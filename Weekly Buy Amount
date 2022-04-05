@@ -1,14 +1,39 @@
 Sub Rotor_Buy()
-'   After pasting the purchased parts manually onto the main sheet,
-'   we remove duplicate, then vlookup onto the purchased column
-    With Worksheets("ROTOR SUMMARY")
-        .Range(Worksheets("ROTOR SUMMARY").Range("CS3"), Worksheets("ROTOR SUMMARY").Range("CS3").End(xlDown)).Copy Worksheets("ROTOR SUMMARY").Range("CQ3")
-        .Range("CQ3:CQ" & Worksheets("ROTOR SUMMARY").Range("CQ" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
-        .Range("CR3").FormulaR1C1 = "=SUMIF(R3C97:R19C97,RC[-1],R3C98:R19C98)"
-        .Range("CR3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CR3:CR" & Worksheets("ROTOR SUMMARY").Range("CQ" & Rows.Count).End(xlUp).Row)
-        .Range("CJ3").FormulaR1C1 = _
-            "=IFERROR(VLOOKUP(RC[-87],C95:C96,2,FALSE),"""")"
-        .Range("CJ3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CJ3:CJ" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
-    End With
+'
+'   This is for weekly restock buy quantity calculation.
+'   Before you run this sub, you need to run the previous "Rotor_Cleanup" sub in the "Weekly_Update_Cleanup" module to clean up the sheets first,
+'   and then copy & paste the purchased parts manually onto range CS3 in the main sheet.
+'
 
+'   Assume we have purchasd parts copied & pasted onto column CK, then we do the following
+    With Worksheets("ROTOR SUMMARY")
+'       remove duplicate
+        .Columns("CK").Resize(, 2).EntireColumn.Insert
+        .Range(Worksheets("ROTOR SUMMARY").Range("CM3"), Worksheets("ROTOR SUMMARY").Range("CM3").End(xlDown)).Copy Worksheets("ROTOR SUMMARY").Range("CK3")
+        .Range("CK3:CK" & Worksheets("ROTOR SUMMARY").Range("CK" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
+'       sumif
+        .Range("CL3").FormulaR1C1 = "=SUMIF(C[1]:C[1],RC[-1],C[2]:C[2])"
+        .Range("CL3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CL3:CL" & Worksheets("ROTOR SUMMARY").Range("CK" & Rows.Count).End(xlUp).Row)
+'       vlookup
+        .Range("CJ3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-87],C[1]:C[2],2,FALSE),0)"
+        .Range("CJ3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CJ3:CJ" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("CJ3", Worksheets("ROTOR SUMMARY").Range("CJ3").End(xlDown)).Copy
+        .Range("CJ3", Worksheets("ROTOR SUMMARY").Range("CJ3").End(xlDown)).PasteSpecial xlPasteValues
+'       calculate buy qty
+        .Range("CG3").FormulaR1C1 = _
+             "=IF(RC[-6]-RC[-8]>=0,"""",(IF(RC[-6]-RC[-7]>=0,IF(RC[-5]-RC[-8]+RC[-7]>=0,"""",IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")),IF(RC[-5]-RC[-8]+RC[-7]>=0,IF(RC[-7]-RC[-6]-RC[3]>1.5,EVEN(RC[-7]-RC[-6]-RC[3]),""""),IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")))))"
+        .Range("CG3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CG3:CG" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+'       lastly, clear old contents
+        .Columns("CK:CL").Delete Shift:=xlToLeft
+        .Columns("CK:CL").ClearContents
+        .Range("A1").Copy
+        .Columns("CK:CL").PasteSpecial xlPasteFormats
+         With .Range("CK2")
+            .FormulaR1C1 = "Paste Purchased Parts Here"
+            .Font.Color = -4165632
+            .WrapText = True
+            .Font.Bold = True
+        End With
+    End With
 End Sub
