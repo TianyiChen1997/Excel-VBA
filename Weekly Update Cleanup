@@ -1,12 +1,16 @@
-Sub Rotor_Weekly()
+Sub Rotor_Cleanup()
+'
+'   This is for weekly restock summary data update and cleanup.
+'   After you run this sub, you may enter "Buy Qty" manually,
+'   or run the subsequent "Rotor_Buy" sub in the "Weekly_Buy_Amount" module to let Excel calculate the amount for you.
+'
+
     Application.ScreenUpdating = False
     Application.EnableEvents = False
 
 '   this is to change the days elapsed manually
     Dim days As Integer
     days = InputBox("How many days elapsed starting last month until today?", "Enter an integer", 30)
-'
-'   To get started, need to copy & and paste TA and PBI data onto the main workbook
 '   You may want to change your workbook name and file directory here
     Dim main_workbook_name As String
     Dim file_dir As String
@@ -14,6 +18,8 @@ Sub Rotor_Weekly()
     file_dir = "C:\Users\rustyw\Desktop\"
     
     Application.DisplayAlerts = False
+    
+'   To get started, need to copy & and paste TA and PBI data onto the main workbook
 '   TA
     Set ta = Workbooks.Open(file_dir & "ta.csv")
     ActiveSheet.Range("A:B").Copy
@@ -144,15 +150,17 @@ Sub Rotor_Weekly()
     Range("CG3").Select
     
 End Sub
-Sub Pad_Weekly()
+Sub Pad_Cleanup()
+'
+'   This sub works just like the Rotor one. For more info, check the comments in "Rotor_Cleanup" sub.
+'
+    
     Application.ScreenUpdating = False
     Application.EnableEvents = False
     
 '   this is to change the days elapsed manually
     Dim days As Integer
     days = InputBox("How many days elapsed starting last month until today?", "Enter an integer", 30)
-'
-'   To get started, need to copy & and paste TA and PBI data onto the main workbook
 '   You may want to change your workbook name and file directory here
     Dim main_workbook_name As String
     Dim file_dir As String
@@ -160,6 +168,8 @@ Sub Pad_Weekly()
     file_dir = "C:\Users\rustyw\Desktop\"
     
     Application.DisplayAlerts = False
+    
+'   To get started, need to copy & paste TA and PBI data onto the main workbook
 '   TA
     Set ta = Workbooks.Open(file_dir & "ta.csv")
     ActiveSheet.Range("A:B").Copy
