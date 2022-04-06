@@ -2,9 +2,6 @@
 I write these codes to speed up some of my repetitive daily works.
 
 
-Currently available: <Rotor/Pad weekly restock template> for update and cleanup purpose
+Currently Finished: <Rotor/Pad Weekly Restock> for update,cleanup, and calculation purposes
 
-Working on: <Rotor/Pad weekly restock template add-on>, i.e purchased parts update, calculate buy qty, and afterwards
- 
- 
- Planning: daily restock (need check purchased parts first...)
+Working on: daily restock 
