@@ -13,7 +13,7 @@ Sub Rotor_Cleanup()
 '   You may want to change your workbook name and file directory here
     Dim main_workbook_name As String
     Dim file_dir As String
-    main_workbook_name = "Rotor Summary test"
+    main_workbook_name = "Rotor Summary"
     file_dir = "C:\Users\rustyw\Desktop\"
     
     Application.DisplayAlerts = False
@@ -161,7 +161,7 @@ Sub Pad_Cleanup()
 '   You may want to change your workbook name and file directory here
     Dim main_workbook_name As String
     Dim file_dir As String
-    main_workbook_name = "PAD Summary test"
+    main_workbook_name = "PAD Summary"
     file_dir = "C:\Users\rustyw\Desktop\"
     
     Application.DisplayAlerts = False
