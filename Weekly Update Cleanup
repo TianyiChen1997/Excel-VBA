@@ -9,7 +9,7 @@ Sub Rotor_Cleanup()
 
 '   this is to change the days elapsed manually
     Dim days As Integer
-    days = InputBox("How many days elapsed starting last month until today?", "Enter an integer", 30)
+    days = InputBox("How many days have elapsed starting last month until today?", "Enter an integer", 30)
 '   You may want to change your workbook name and file directory here
     Dim main_workbook_name As String
     Dim file_dir As String
@@ -145,7 +145,7 @@ Sub Rotor_Cleanup()
     
     Application.ScreenUpdating = True
     Worksheets("ROTOR SUMMARY").Activate
-    Range("CG3").Select
+    Range("CK3").Select
     
 End Sub
 Sub Pad_Cleanup()
@@ -157,7 +157,7 @@ Sub Pad_Cleanup()
     
 '   this is to change the days elapsed manually
     Dim days As Integer
-    days = InputBox("How many days elapsed starting last month until today?", "Enter an integer", 30)
+    days = InputBox("How many days have elapsed starting last month until today?", "Enter an integer", 30)
 '   You may want to change your workbook name and file directory here
     Dim main_workbook_name As String
     Dim file_dir As String
@@ -321,6 +321,6 @@ Sub Pad_Cleanup()
     
     Application.ScreenUpdating = True
     Worksheets("PAD Summary").Activate
-    Range("AN3").Select
+    Range("AQ3").Select
     
 End Sub
