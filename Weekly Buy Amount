@@ -2,9 +2,11 @@ Sub Rotor_Buy()
 '
 '   This is for weekly restock buy quantity calculation.
 '   Before you run this sub, you need to run the previous "Rotor_Cleanup" sub in the "Weekly_Update_Cleanup" module to clean up the sheets first,
-'   and then copy & paste the purchased parts manually onto range CS3 in the main sheet.
+'   and then copy & paste the purchased parts manually onto cell CK3 in the main sheet.
 '
 
+    Application.ScreenUpdating = False
+    
 '   Assume we have purchasd parts copied & pasted onto column CK, then we do the following
     With Worksheets("ROTOR SUMMARY")
 '       remove duplicate
@@ -24,7 +26,7 @@ Sub Rotor_Buy()
         .Range("CG3").FormulaR1C1 = _
              "=IF(RC[-6]-RC[-8]>=0,"""",(IF(RC[-6]-RC[-7]>=0,IF(RC[-5]-RC[-8]+RC[-7]>=0,"""",IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")),IF(RC[-5]-RC[-8]+RC[-7]>=0,IF(RC[-7]-RC[-6]-RC[3]>1.5,EVEN(RC[-7]-RC[-6]-RC[3]),""""),IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")))))"
         .Range("CG3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CG3:CG" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
-'       lastly, clear old contents
+'       lastly, clear old contents, then filter the buy qty
         .Columns("CK:CL").Delete Shift:=xlToLeft
         .Columns("CK:CL").ClearContents
         .Range("A1").Copy
@@ -35,5 +37,13 @@ Sub Rotor_Buy()
             .WrapText = True
             .Font.Bold = True
         End With
+        .Range("A:CT").AutoFilter Field:=85, Criteria1:="<>"
     End With
+'   now we copy & paste the buy qty onto the "Buy" sheet, then we are done
+    Union(Worksheets("ROTOR SUMMARY").Range("B3:B" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible), Worksheets("ROTOR SUMMARY").Range("CG3:CG" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible)).Copy Worksheets("Buy").Range("A3")
+    Worksheets("ROTOR SUMMARY").Range("A:CT").AutoFilter Field:=85
+    
+    Application.ScreenUpdating = True
+    Worksheets("Buy").Activate
+    Range("A3").Select
 End Sub
