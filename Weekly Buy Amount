@@ -6,26 +6,33 @@ Sub Rotor_Buy()
 '
 
     Application.ScreenUpdating = False
+
+'   You may want to change your worksheets names here
+    Dim summary_ws, buy_ws As Worksheet
+    Dim last_row As Long
+    Set summary_ws = Worksheets("ROTOR SUMMARY")
+    Set buy_ws = Worksheets("Buy")
+    last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
     
 '   Assume we have purchasd parts copied & pasted onto column CK, then we do the following
-    With Worksheets("ROTOR SUMMARY")
+    With summary_ws
 '       remove duplicate
         .Columns("CK").Resize(, 2).EntireColumn.Insert
-        .Range(Worksheets("ROTOR SUMMARY").Range("CM3"), Worksheets("ROTOR SUMMARY").Range("CM3").End(xlDown)).Copy Worksheets("ROTOR SUMMARY").Range("CK3")
-        .Range("CK3:CK" & Worksheets("ROTOR SUMMARY").Range("CK" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range(summary_ws.Range("CM3"), summary_ws.Range("CM3").End(xlDown)).Copy summary_ws.Range("CK3")
+        .Range("CK3:CK" & summary_ws.Range("CK" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
 '       sumif
         .Range("CL3").FormulaR1C1 = "=SUMIF(C[1]:C[1],RC[-1],C[2]:C[2])"
-        .Range("CL3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CL3:CL" & Worksheets("ROTOR SUMMARY").Range("CK" & Rows.Count).End(xlUp).Row)
+        .Range("CL3").AutoFill Destination:=summary_ws.Range("CL3:CL" & summary_ws.Range("CK" & Rows.Count).End(xlUp).Row)
 '       vlookup
         .Range("CJ3").FormulaR1C1 = _
             "=IFERROR(VLOOKUP(RC[-87],C[1]:C[2],2,FALSE),0)"
-        .Range("CJ3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CJ3:CJ" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
-        .Range("CJ3", Worksheets("ROTOR SUMMARY").Range("CJ3").End(xlDown)).Copy
-        .Range("CJ3", Worksheets("ROTOR SUMMARY").Range("CJ3").End(xlDown)).PasteSpecial xlPasteValues
+        .Range("CJ3").AutoFill Destination:=summary_ws.Range("CJ3:CJ" & last_row)
+        .Range("CJ3", summary_ws.Range("CJ3").End(xlDown)).Copy
+        .Range("CJ3", summary_ws.Range("CJ3").End(xlDown)).PasteSpecial xlPasteValues
 '       calculate buy qty
         .Range("CG3").FormulaR1C1 = _
              "=IF(RC[-6]-RC[-8]>=0,"""",(IF(RC[-6]-RC[-7]>=0,IF(RC[-5]-RC[-8]+RC[-7]>=0,"""",IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")),IF(RC[-5]-RC[-8]+RC[-7]>=0,IF(RC[-7]-RC[-6]-RC[3]>1.5,EVEN(RC[-7]-RC[-6]-RC[3]),""""),IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")))))"
-        .Range("CG3").AutoFill Destination:=Worksheets("ROTOR SUMMARY").Range("CG3:CG" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("CG3").AutoFill Destination:=summary_ws.Range("CG3:CG" & last_row)
 '       lastly, clear old contents, then filter the buy qty
         .Columns("CK:CL").Delete Shift:=xlToLeft
         .Columns("CK:CL").ClearContents
@@ -40,11 +47,11 @@ Sub Rotor_Buy()
         .Range("A:CT").AutoFilter Field:=85, Criteria1:="<>"
     End With
 '   now we copy & paste the buy qty onto the "Buy" sheet, then we are done
-    Union(Worksheets("ROTOR SUMMARY").Range("B3:B" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible), Worksheets("ROTOR SUMMARY").Range("CG3:CG" & Worksheets("ROTOR SUMMARY").Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible)).Copy Worksheets("Buy").Range("A3")
-    Worksheets("ROTOR SUMMARY").Range("A:CT").AutoFilter Field:=85
+    Union(summary_ws.Range("B3:B" & last_row).SpecialCells(xlCellTypeVisible), summary_ws.Range("CG3:CG" & last_row).SpecialCells(xlCellTypeVisible)).Copy buy_ws.Range("A3")
+    summary_ws.Range("A:CT").AutoFilter Field:=85
     
     Application.ScreenUpdating = True
-    Worksheets("Buy").Activate
+    buy_ws.Activate
     Range("A3").Select
 End Sub
 Sub Pad_Buy()
@@ -54,24 +61,31 @@ Sub Pad_Buy()
 '
 
     Application.ScreenUpdating = False
+    
+'   You may want to change your worksheets names here
+    Dim summary_ws, buy_ws As Worksheet
+    Dim last_row As Long
+    Set summary_ws = Worksheets("PAD Summary")
+    Set buy_ws = Worksheets("Pad Restock")
+    last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
 
 '   Assume we have entered the qty into the Purchased Column, then we do the following
-    With Worksheets("PAD Summary")
+    With summary_ws
 '       find out CDP swap qty
         .Range("S3").FormulaR1C1 = _
             "=IF(RC[19]>0,IF(RC[-2]>=RC[19],ROUND(RC[19],0),RC[-2]),0)"
-        .Range("S3").AutoFill Destination:=Worksheets("PAD Summary").Range("S3:S" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("S3").AutoFill Destination:=summary_ws.Range("S3:S" & last_row)
 '       calculate buy qty
         .Range("AN3").FormulaR1C1 = _
             "=IF(RC[-1]>0,IF(LEN(RC[-19])=0,IF(ROUND(RC[-1]-RC[1],0)>0,ROUND(RC[-1]-RC[1],0),""""),IF(RC[-19]+RC[1]>=RC[-1],"""",ROUND(RC[-1]-RC[-19]-RC[1],0))),"""")"
-        .Range("AN3").AutoFill Destination:=Worksheets("PAD Summary").Range("AN3:AN" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("AN3").AutoFill Destination:=summary_ws.Range("AN3:AN" & last_row)
         .Range("A:BA").AutoFilter Field:=40, Criteria1:="<>"
     End With
 '   now we copy & paste the buy qty onto the "Pad Restock" sheet, then we are done
-    Union(Worksheets("PAD Summary").Range("B3:B" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible), Worksheets("PAD Summary").Range("AN3:AN" & Worksheets("PAD Summary").Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible)).Copy Worksheets("Pad Restock").Range("A2")
-    Worksheets("PAD Summary").Range("A:BA").AutoFilter Field:=40
+    Union(summary_ws.Range("B3:B" & last_row).SpecialCells(xlCellTypeVisible), summary_ws.Range("AN3:AN" & last_row).SpecialCells(xlCellTypeVisible)).Copy buy_ws.Range("A2")
+    summary_ws.Range("A:BA").AutoFilter Field:=40
     
     Application.ScreenUpdating = True
-    Worksheets("Pad Restock").Activate
+    buy_ws.Activate
     Range("A2").Select
 End Sub
