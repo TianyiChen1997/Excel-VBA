@@ -1,0 +1,264 @@
+Sub Pad_Weekly()
+'
+'   This is the main sub for pad weekly restock summary.
+'   It calls the other two subs to update, clean up, and calcuate buy qty.
+'
+    Call Pad_Cleanup
+    Call Pad_Buy
+
+End Sub
+Private Sub Pad_Cleanup()
+'
+'   This is for weekly restock summary data update and cleanup.
+'   If you only want to run this sub, then you need to enter "Buy Qty" manually afterwards.
+'
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+'   this is to change the days elapsed manually
+    Dim days As Integer
+    days = InputBox("How many days have elapsed starting last month until today?", "Enter an integer", 30)
+
+'   You may want to change your worksheets names, workbooks names and file directory here
+    Dim summary_ws, buy_ws, ta_ws, cdm_ta_ws, afn_ta_ws, cdp_ta_ws, cdm_pbi_ws, afn_pbi_ws, pad_rotor, p_ws As Worksheet
+    Dim main_wb, ta_wb, cdm_wb, afn_wb, purchased_wb As Workbook
+    Dim file_dir, purchased_parts_file_dir As String
+    Dim last_row, row_count As Long
+    
+    file_dir = "C:\Users\rustyw\Desktop\"
+    purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    Set ta_wb = Workbooks.Open(file_dir & "ta.csv")
+    Set cdm_wb = Workbooks.Open(file_dir & "cdm.csv")
+    Set afn_wb = Workbooks.Open(file_dir & "afn.csv")
+    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & "Purchased Parts (Pad + Rotor).xlsx")
+    Set main_wb = Workbooks("PAD Summary")
+    Set summary_ws = main_wb.Worksheets("PAD Summary")
+    Set buy_ws = main_wb.Worksheets("Pad Restock")
+    Set ta_ws = main_wb.Worksheets("TA")
+    Set cdm_ta_ws = main_wb.Worksheets("CDM TA")
+    Set afn_ta_ws = main_wb.Worksheets("AFN TA")
+    Set cdp_ta_ws = main_wb.Worksheets("CDP TA")
+    Set cdm_pbi_ws = main_wb.Worksheets("CDM PBI")
+    Set afn_pbi_ws = main_wb.Worksheets("AFN PBI")
+    Set p_ws = main_wb.Worksheets("Purchased")
+    Set pad_rotor = purchased_wb.Worksheets("PAD & ROTOR")
+
+    last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
+    
+
+'   To get started, need to copy & and paste TA and PBI data onto the main workbook
+'   TA
+    ta_wb.Worksheets(1).Range("A:B").Copy ta_ws.Range("A1")
+    ta_wb.Close SaveChanges:=False
+'   CDM PBI
+    cdm_wb.Worksheets(1).Range("A:E").Copy cdm_pbi_ws.Range("A1")
+    cdm_wb.Close SaveChanges:=False
+'   AFN PBI
+    afn_wb.Worksheets(1).Range("A:C").Copy afn_pbi_ws.Range("A1")
+    afn_wb.Close SaveChanges:=False
+
+'   Then, filter TA to get CDM, CDP and AFN TA
+'   CDM TA
+    With ta_ws
+        .Range("$A$1:$B$" & ta_ws.Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=p*", _
+        Operator:=xlAnd, Criteria2:="=*cdm"
+        .Columns("A:B").Copy cdm_ta_ws.Range("A1")
+    End With
+'   CPD TA
+    With ta_ws
+        .Range("$A$1:$B$" & ta_ws.Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=p*", _
+        Operator:=xlAnd, Criteria2:="=*cdp"
+        .Columns("A:B").Copy cdp_ta_ws.Range("A1")
+    End With
+'   AFN TA
+    With ta_ws
+        .Range("$A$1:$B$" & ta_ws.Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=afn*", _
+        Operator:=xlAnd
+        .Columns("A:B").Copy afn_ta_ws.Range("A1")
+    End With
+
+'   Then, copy & paste Purchased Qty
+    row_count = 0
+    With pad_rotor
+        'Get the last column number
+        last_col = .Range("ZZ1").End(xlToLeft).Column
+        
+        'Start a loop to copy and paste data from the first column to the last column
+        For i = 1 To last_col - 1 Step 7
+            'Count the number of rows in the looping column
+            last_row_p = .Cells(1, i + 1).End(xlDown).Row
+            .Range(.Cells(4, i + 1), .Cells(last_row_p, i + 6)).Copy Destination:=p_ws.Cells(row_count + 1, 1)
+            'count the number of rows in the new worksheet
+            row_count = row_count + last_row_p - 3
+        Next i
+    End With
+    purchased_wb.Close SaveChanges:=False
+
+
+'   Now, time to update values
+'   First, edit all CDM, AFN, and CDP TA, and both CDM and AFN PBI, and Purchased Qty
+'   CDM TA: replace
+    With cdm_ta_ws
+        .Columns("A").Replace What:="cdm", Replacement:=""
+        .Columns("A").Replace What:="p", Replacement:=""
+    End With
+'   AFN TA: replace
+    afn_ta_ws.Columns("A").Replace What:="afn", Replacement:=""
+'   CDP TA: replace
+    With cdp_ta_ws
+        .Columns("A").Replace What:="cdp", Replacement:=""
+        .Columns("A").Replace What:="p", Replacement:=""
+    End With
+'   CDM PBI: copy& paste, remove duplicates, and sumif
+    With cdm_pbi_ws
+        .Range(cdm_pbi_ws.Range("A2"), cdm_pbi_ws.Range("A2").End(xlDown)).Copy cdm_pbi_ws.Range("H2")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I2").FormulaR1C1 = "=SUMIF(C[-8]:C[-8],RC[-1],C[-4]:C[-4])"
+        .Range("I2").AutoFill Destination:=cdm_pbi_ws.Range("I2:I" & cdm_pbi_ws.Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'   AFN PBI: replace
+    afn_pbi_ws.Columns("A").Replace What:="afn", Replacement:=""
+'   Purchased: copy& paste, remove duplicates, and sumif
+    With p_ws
+        .Range(p_ws.Range("B1"), p_ws.Range("B1").End(xlDown)).Copy p_ws.Range("H1")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I1").FormulaR1C1 = "=SUMIF(C2:C2,RC[-1],C5:C5)"
+        .Range("I1").AutoFill Destination:=p_ws.Range("I1:I" & p_ws.Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'
+'
+'   Second, main sheet change CDM, AFN, CDP TA and PBI sales, and purchased qty
+    With summary_ws
+'       Clear old columns first
+        .Columns("AN:AO").ClearContents
+        .Range("AN2").FormulaR1C1 = "Buy QTY"
+        .Range("AN2").Font.Color = -4165632
+        .Range("AO2").FormulaR1C1 = "Purchased"
+        .Range("AO2").Font.Color = -16776961
+        .Columns("R:S").ClearContents
+        .Range("R1:S1").FormulaR1C1 = "Swap"
+        .Range("R2").FormulaR1C1 = "AFN to CDM"
+        .Range("S2").FormulaR1C1 = "CDP to CDM"
+        .Range("R1:S2").Font.Color = -4165632
+'       CDM TA
+        .Range("C3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-1],'CDM TA'!C[-2]:C[-1],2,FALSE),0)"
+        .Range("C3").AutoFill Destination:=summary_ws.Range("C3:C" & last_row)
+'       AFN TA
+        .Range("P3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-14],'AFN TA'!C[-15]:C[-14],2,FALSE),0)"
+        .Range("P3").AutoFill Destination:=summary_ws.Range("P3:P" & last_row)
+'       CDP TA
+        .Range("Q3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-15],'CDP TA'!C[-16]:C[-15],2,FALSE),0)"
+        .Range("Q3").AutoFill Destination:=summary_ws.Range("Q3:Q" & last_row)
+        .Columns("C:C").Copy
+        .Columns("C:C").PasteSpecial xlPasteValues
+        .Columns("P:Q").Copy
+        .Columns("P:Q").PasteSpecial xlPasteValues
+'       Primary TA
+        .Columns("T:T").Copy
+        .Columns("U:U").Insert Shift:=xlToRight
+        .Range("A:BB").AutoFilter Field:=21, Criteria1:="<>"
+        .Columns("U:U").Replace What:="(2way)", Replacement:=""
+        With .Range("V3:V" & last_row).SpecialCells(xlCellTypeVisible)
+            .Cells.FormulaR1C1 = "=IFERROR(VLOOKUP(RC[-1],'CDM TA'!C[-21]:C[-20],2,FALSE),0)"
+            .Cells.FillDown
+        End With
+        .Range("A:BB").AutoFilter Field:=21
+        .Columns("V:V").Copy
+        .Columns("V:V").PasteSpecial xlPasteValues
+        .Columns("U:U").Delete Shift:=xlToLeft
+'       AFN PBI
+        .Range("M3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-11],'AFN PBI'!C[-12]:C[-10],3,FALSE),0)"
+        .Range("M3").AutoFill Destination:=summary_ws.Range("M3:M" & last_row)
+        .Range("M3", summary_ws.Range("M3").End(xlDown)).Copy
+        .Range("M3", summary_ws.Range("M3").End(xlDown)).PasteSpecial xlPasteValues
+'       CDM PBI
+        .Range("AJ3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-35],'CDM PBI'!C[-28]:C[-27],2,FALSE),0)"
+        .Range("AJ3").AutoFill Destination:=summary_ws.Range("AJ3:AJ" & last_row)
+        .Range("AJ3", summary_ws.Range("AJ3").End(xlDown)).Copy
+        .Range("AJ3", summary_ws.Range("AJ3").End(xlDown)).PasteSpecial xlPasteValues
+'       Change days based on today's date
+        .Range("AK3").FormulaR1C1 = "=(RC[-1]+RC[-2])/" & days & "*7"
+        .Range("AK3").AutoFill Destination:=summary_ws.Range("AK3:AK" & last_row)
+'       Sort weekly sales qty
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("AL2:AL" & last_row), Order:=xlDescending
+            .Apply
+        End With
+'       Change Purchased Qty
+        .Range("AO3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-40],Purchased!C[-33]:C[-32],2,FALSE),0)"
+        .Range("AO3").AutoFill Destination:=summary_ws.Range("AO3:AO" & last_row)
+        .Range("AO3", summary_ws.Range("AO3").End(xlDown)).Copy
+        .Range("AO3", summary_ws.Range("AO3").End(xlDown)).PasteSpecial xlPasteValues
+    End With
+'
+'
+'   Lastly, clear old contents
+    With buy_ws
+        .Range("A2:B22").ClearContents
+        .Range("A23:U59").ClearContents
+        .Range("A23:B23").Copy
+        .Range("A23:U59").PasteSpecial xlPasteFormats
+    End With
+    ta_ws.Columns("A:B").ClearContents
+    ta_ws.Columns("A:B").ClearContents
+    cdm_ta_ws.Columns("A:B").ClearContents
+    cdm_pbi_ws.Columns("A:I").ClearContents
+    afn_ta_ws.Columns("A:B").ClearContents
+    afn_pbi_ws.Columns("A:C").ClearContents
+    cdp_ta_ws.Columns("A:B").ClearContents
+    p_ws.Columns("A:I").ClearContents
+    
+    summary_ws.Activate
+    Range("AN3").Select
+    
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+    
+End Sub
+Private Sub Pad_Buy()
+'
+'   This is for weekly restock buy quantity calculation.
+'   Before you run this sub, you need to run the previous "Pad_Cleanup" sub to clean up the sheets first.
+'
+
+    Application.ScreenUpdating = False
+    
+'   You may want to change your worksheets names, workbook name here
+    Dim summary_ws, buy_ws As Worksheet
+    Dim main_wb As Workbook
+    Dim last_row As Long
+    
+    Set main_wb = Workbooks("PAD Summary")
+    Set summary_ws = main_wb.Worksheets("PAD Summary")
+    Set buy_ws = main_wb.Worksheets("Pad Restock")
+    last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
+
+'   Assume we have run the previous "Pad_Cleanup" sub, then we do the following
+    With summary_ws
+'       find out CDP swap qty
+        .Range("S3").FormulaR1C1 = _
+            "=IF(RC[19]>0,IF(RC[-2]>=RC[19],ROUND(RC[19],0),RC[-2]),0)"
+        .Range("S3").AutoFill Destination:=summary_ws.Range("S3:S" & last_row)
+'       calculate buy qty, then filter it
+        .Range("AN3").FormulaR1C1 = _
+            "=IF(RC[-1]>0,IF(LEN(RC[-19])=0,IF(ROUND(RC[-1]-RC[1],0)>0,ROUND(RC[-1]-RC[1],0),""""),IF(RC[-19]+RC[1]>=RC[-1],"""",ROUND(RC[-1]-RC[-19]-RC[1],0))),"""")"
+        .Range("AN3").AutoFill Destination:=summary_ws.Range("AN3:AN" & last_row)
+        .Range("A:BA").AutoFilter Field:=40, Criteria1:="<>"
+    End With
+'   now we copy & paste the buy qty onto the "Pad Restock" sheet, then we are done
+    Union(summary_ws.Range("B3:B" & last_row).SpecialCells(xlCellTypeVisible), summary_ws.Range("AN3:AN" & last_row).SpecialCells(xlCellTypeVisible)).Copy buy_ws.Range("A2")
+    summary_ws.Range("A:BA").AutoFilter Field:=40
+    
+    Application.ScreenUpdating = True
+    buy_ws.Activate
+    Range("A2:B" & Range("A" & Rows.Count).End(xlUp).Row).Select
+
+End Sub
