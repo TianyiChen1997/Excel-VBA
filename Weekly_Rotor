@@ -1,0 +1,234 @@
+Sub Rotor_Weekly()
+'
+'   This is the main sub for rotor weekly restock summary.
+'   It calls the other two subs to update, clean up, and calcuate buy qty.
+'
+    Call Rotor_Cleanup
+    Call Rotor_Buy
+
+End Sub
+Private Sub Rotor_Cleanup()
+'
+'   This is for weekly restock summary data update and cleanup.
+'   If you only want to run this sub, then you need to enter "Buy Qty" manually afterwards.
+'
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+
+'   this is to change the days elapsed manually
+    Dim days As Integer
+    days = InputBox("How many days have elapsed starting last month until today?", "Enter an integer", 30)
+
+'   You may want to change your worksheets names, workbooks names and file directory here
+    Dim summary_ws, buy_ws, ta_ws, onz_ta_ws, cnz_ta_ws, onz_pbi_ws, cnz_pbi_ws, pad_rotor, p_ws As Worksheet
+    Dim main_wb, ta_wb, onz_wb, cnz_wb, purchased_wb As Workbook
+    Dim file_dir, purchased_parts_file_dir As String
+    Dim last_row, row_count As Long
+    
+    file_dir = "C:\Users\rustyw\Desktop\"
+    purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    Set ta_wb = Workbooks.Open(file_dir & "ta.csv")
+    Set onz_wb = Workbooks.Open(file_dir & "onz.csv")
+    Set cnz_wb = Workbooks.Open(file_dir & "cnz.csv")
+    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & "Purchased Parts (Pad + Rotor).xlsx")
+    Set main_wb = Workbooks("Rotor Summary")
+    Set summary_ws = main_wb.Worksheets("ROTOR SUMMARY")
+    Set buy_ws = main_wb.Worksheets("Buy")
+    Set ta_ws = main_wb.Worksheets("TA")
+    Set onz_ta_ws = main_wb.Worksheets("ONZ TA")
+    Set cnz_ta_ws = main_wb.Worksheets("CNZ TA")
+    Set onz_pbi_ws = main_wb.Worksheets("ONZ PBI")
+    Set cnz_pbi_ws = main_wb.Worksheets("CNZ PBI")
+    Set p_ws = main_wb.Worksheets("Purchased")
+    Set pad_rotor = purchased_wb.Worksheets("PAD & ROTOR")
+
+    last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
+
+
+'   To get started, need to copy & and paste TA and PBI data onto the main workbook
+'   TA
+    ta_wb.Worksheets(1).Range("A:B").Copy ta_ws.Range("A1")
+    ta_wb.Close SaveChanges:=False
+'   ONZ PBI
+    onz_wb.Worksheets(1).Range("A:E").Copy onz_pbi_ws.Range("A1")
+    onz_wb.Close SaveChanges:=False
+'   CNZ PBI
+    cnz_wb.Worksheets(1).Range("A:E").Copy cnz_pbi_ws.Range("A1")
+    cnz_wb.Close SaveChanges:=False
+
+'   Then, filter TA to get ONZ TA and CNZ TA
+'   ONZ TA
+    With ta_ws
+        .Range("$A$1:$B$" & ta_ws.Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*onz"
+        .Columns("A:B").Copy onz_ta_ws.Range("A1")
+    End With
+'   CNZ TA
+    With ta_ws
+        .Range("$A$1:$B$" & ta_ws.Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*cnz"
+        .Columns("A:B").Copy cnz_ta_ws.Range("A1")
+    End With
+
+'   Then, copy & paste Purchased Qty
+    row_count = 0
+    With pad_rotor
+        'Get the last column number
+        last_col = .Range("ZZ1").End(xlToLeft).Column
+        
+        'Start a loop to copy and paste data from the first column to the last column
+        For i = 1 To last_col - 1 Step 7
+            'Count the number of rows in the looping column
+            last_row_p = .Cells(1, i + 1).End(xlDown).Row
+            .Range(.Cells(4, i + 1), .Cells(last_row_p, i + 6)).Copy Destination:=p_ws.Cells(row_count + 1, 1)
+            'count the number of rows in the new worksheet
+            row_count = row_count + last_row_p - 3
+        Next i
+    End With
+    purchased_wb.Close SaveChanges:=False
+    
+
+'   Now, time to update values
+'   First, edit both CNZ and ONZ, TA and PBI, and Purchased
+'   ONZ PBI: copy & paste, remove duplicates, and sumif
+    With onz_pbi_ws
+        .Range(onz_pbi_ws.Range("A2"), onz_pbi_ws.Range("A2").End(xlDown)).Copy onz_pbi_ws.Range("H2")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I2").FormulaR1C1 = "=SUMIF(C[-8]:C[-8],RC[-1],C[-4]:C[-4])"
+        .Range("I2").AutoFill Destination:=onz_pbi_ws.Range("I2:I" & onz_pbi_ws.Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'   CNZ PBI: copy & paste, remove duplicates, sumif, and replace
+    With cnz_pbi_ws
+        .Columns("A").Replace What:="cnz", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+        .Range(cnz_pbi_ws.Range("A2"), cnz_pbi_ws.Range("A2").End(xlDown)).Copy cnz_pbi_ws.Range("H2")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I2").FormulaR1C1 = "=SUMIF(C[-8]:C[-8],RC[-1],C[-4]:C[-4])"
+        .Range("I2").AutoFill Destination:=cnz_pbi_ws.Range("I2:I" & cnz_pbi_ws.Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'   ONZ TA: no changes needed
+'   CNZ TA: replace
+    With cnz_ta_ws
+        .Columns("A").Replace What:="cnz", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+    End With
+'   Purchased: copy& paste, remove duplicates, and sumif
+    With p_ws
+        .Range(p_ws.Range("B1"), p_ws.Range("B1").End(xlDown)).Copy p_ws.Range("H1")
+        .Range("H:H").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("I1").FormulaR1C1 = "=SUMIF(C2:C2,RC[-1],C5:C5)"
+        .Range("I1").AutoFill Destination:=p_ws.Range("I1:I" & p_ws.Range("H" & Rows.Count).End(xlUp).Row)
+    End With
+'
+'
+'   Second, main sheet change ONZ and CNZ TA and PBI sales, sort, and purchased qty
+    With summary_ws
+'       Clear old columns first
+        .Columns("CG:CG").ClearContents
+        .Range("CG2").FormulaR1C1 = "Buy QTY"
+        .Range("CG2").Font.Color = -1003520
+        .Columns("CJ:CJ").ClearContents
+        .Range("CJ2").FormulaR1C1 = "Purchased"
+        .Range("CJ2").Font.Color = -16776961
+'       ONZ TA
+        .Range("E3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-4],'ONZ TA'!C[-5]:C[-4],2,FALSE),0)"
+        .Range("E3").AutoFill Destination:=summary_ws.Range("E3:E" & last_row)
+'       CNZ TA
+        .Range("F3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-4],'CNZ TA'!C[-5]:C[-4],2,FALSE),0)"
+        .Range("F3").AutoFill Destination:=summary_ws.Range("F3:F" & last_row)
+        .Columns("E:F").Copy
+        .Columns("E:F").PasteSpecial xlPasteValues
+'       ONZ PBI
+        .Range("AS3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-44],'ONZ PBI'!C[-37]:C[-36],2,FALSE),0)"
+        .Range("AS3").AutoFill Destination:=summary_ws.Range("AS3:AS" & last_row)
+'       CNZ PBI
+        .Range("AT3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-44],'CNZ PBI'!C[-38]:C[-37],2,FALSE),0)"
+        .Range("AT3").AutoFill Destination:=summary_ws.Range("AT3:AT" & last_row)
+        .Range("AS3", summary_ws.Range("AS3").End(xlDown)).Copy
+        .Range("AS3", summary_ws.Range("AS3").End(xlDown)).PasteSpecial xlPasteValues
+        .Range("AT3", summary_ws.Range("AT3").End(xlDown)).Copy
+        .Range("AT3", summary_ws.Range("AT3").End(xlDown)).PasteSpecial xlPasteValues
+'       Change days based on today's date
+        .Range("BY3").FormulaR1C1 = "=(RC[-33]+RC[-30])/" & days & "*7"
+        .Range("BY3").AutoFill Destination:=summary_ws.Range("BY3:BY" & last_row)
+        .Range("BZ3").FormulaR1C1 = "=(RC[-36]+RC[-33])/" & days & "*7"
+        .Range("BZ3").AutoFill Destination:=summary_ws.Range("BZ3:BZ" & last_row)
+'       Sort LP qty
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("CC2:CC" & last_row), Order:=xlDescending
+            .Apply
+        End With
+'       Change purchased qty
+        .Range("CJ3").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-87],Purchased!C[-80]:C[-79],2,FALSE),0)"
+        .Range("CJ3").AutoFill Destination:=summary_ws.Range("CJ3:CJ" & last_row)
+        .Range("CJ3", summary_ws.Range("CJ3").End(xlDown)).Copy
+        .Range("CJ3", summary_ws.Range("CJ3").End(xlDown)).PasteSpecial xlPasteValues
+    End With
+'
+'
+'   Lastly, clear old contents
+    With buy_ws
+        .Range("A3:AA139").ClearContents
+        .Range("A83:B83").Copy
+        .Range("A3:B82").PasteSpecial xlPasteFormats
+        .Range("A83:B83").Copy
+        .Range("A83:AA139").PasteSpecial xlPasteFormats
+    End With
+    ta_ws.Columns("A:B").ClearContents
+    ta_ws.Columns("A:B").ClearContents
+    onz_ta_ws.Columns("A:B").ClearContents
+    onz_pbi_ws.Columns("A:I").ClearContents
+    cnz_ta_ws.Columns("A:B").ClearContents
+    cnz_pbi_ws.Columns("A:I").ClearContents
+    p_ws.Columns("A:I").ClearContents
+    
+    summary_ws.Activate
+    Range("CG3").Select
+    
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+    
+End Sub
+Private Sub Rotor_Buy()
+'
+'   This is for weekly restock buy quantity calculation.
+'   Before you run this sub, you need to run the previous "Rotor_Cleanup" sub to clean up the sheets first.
+'
+
+    Application.ScreenUpdating = False
+
+'   You may want to change your worksheets names, workbook name here
+    Dim summary_ws, buy_ws As Worksheet
+    Dim main_wb As Workbook
+    Dim last_row As Long
+    
+    Set main_wb = Workbooks("Rotor Summary")
+    Set summary_ws = main_wb.Worksheets("ROTOR SUMMARY")
+    Set buy_ws = main_wb.Worksheets("Buy")
+    last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
+    
+'   Assume we have run the previous "Rotor_Cleanup" sub, then we do the following
+    With summary_ws
+'       calculate buy qty
+        .Range("CG3").FormulaR1C1 = _
+             "=IF(RC[-6]-RC[-8]>=0,"""",(IF(RC[-6]-RC[-7]>=0,IF(RC[-5]-RC[-8]+RC[-7]>=0,"""",IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")),IF(RC[-5]-RC[-8]+RC[-7]>=0,IF(RC[-7]-RC[-6]-RC[3]>1.5,EVEN(RC[-7]-RC[-6]-RC[3]),""""),IF(RC[-8]-RC[-6]-RC[-5]-RC[3]>1.5,EVEN(RC[-8]-RC[-6]-RC[-5]-RC[3]),"""")))))"
+        .Range("CG3").AutoFill Destination:=summary_ws.Range("CG3:CG" & last_row)
+'       filter the buy qty
+        .Range("A:CS").AutoFilter Field:=85, Criteria1:="<>"
+    End With
+'   now we copy & paste the buy qty onto the "Buy" sheet, then we are done
+    Union(summary_ws.Range("B3:B" & last_row).SpecialCells(xlCellTypeVisible), summary_ws.Range("CG3:CG" & last_row).SpecialCells(xlCellTypeVisible)).Copy buy_ws.Range("A3")
+    summary_ws.Range("A:CS").AutoFilter Field:=85
+    
+    Application.ScreenUpdating = True
+    buy_ws.Activate
+    Range("A3:B" & Range("A" & Rows.Count).End(xlUp).Row).Select
+    
+End Sub
