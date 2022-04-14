@@ -1,0 +1,178 @@
+Private po_wb, purchased_wb As Workbook
+Private po_ws, purchased_ws As Worksheet
+Private i As Integer
+Private findResult As Range
+Private k As Variant
+
+Sub Daily_1()
+'
+'   It is the first sub to run. It copies & pastes work orders below purchase orders,
+'   then look for them in the Purchased Part workbook, then generate a new qbp workbook.
+'   After running this sub, you should look up order qty on the QBP website,
+'   fill out desired qty in the po_ws, and then run the Daily_2 sub.
+'
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    'You may want to change your worksheets names, workbooks names and file directory here
+    'If you want to change names of purchased_wb or purchased_ws, you also need to go to the find function to change them there
+    Dim item As Range
+    Dim qbp_wb As Workbook
+    Dim wo_ws As Worksheet
+    Dim file_dir, purchased_parts_file_dir As String
+    
+    file_dir = "C:\Users\rustyw\Desktop\"
+    purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    Set po_wb = ActiveWorkbook
+    Set qbp_wb = Workbooks.Add
+    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & "Purchased Parts (Pad + Rotor).xlsx")
+    Set wo_ws = po_wb.Worksheets("PURCHASE WORK ORDERS")
+    Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
+    Set purchased_ws = purchased_wb.Worksheets("PAD & ROTOR")
+    
+    
+    'Sort the wo_ws for easy reading
+    With wo_ws
+        .Range("A1:D1").AutoFilter
+        .AutoFilter.Sort.SortFields.Add2 Key:=Range("B1"), SortOn:=xlSortOnValues, Order:=xlAscending
+        .AutoFilter.Sort.Apply
+    End With
+    'This do while loop is to format items in wo_ws from XXXX-ONZ to RXXXXONZ
+    i = 2
+    Do While wo_ws.Cells(i, 2).Value <> ""
+        wo_ws.Cells(i, 2).Value = "R" & Left(wo_ws.Cells(i, 2).Value, Len(wo_ws.Cells(i, 2).Value) - 4) & "ONZ"
+        i = i + 1
+    Loop
+    'Copy & paste work order below purchase order
+    wo_ws.Range("A2:D" & wo_ws.Range("A" & Rows.Count).End(xlUp).Row - 1).Copy po_ws.Range("A" & po_ws.Range("A" & Rows.Count).End(xlUp).Row + 1)
+    
+    'Use do while loop to loop through all rows
+    i = 2
+    Do While po_ws.Cells(i, 2).Value <> ""
+        'starts at b2
+        k = po_ws.Cells(i, 2).Value
+        Set findResult = purchased_ws.Range("A1:ZZ100").find(What:=k, LookIn:=xlValues)
+        'use this sub to check if the item can be found in purchased_ws
+        Call find(findResult)
+        i = i + 1
+    Loop
+    
+    'close the purchased_wo if no hyperlinks established, otherwise keep it open
+    If po_ws.Columns("E:E").Hyperlinks.Count = 0 Then
+        purchased_wb.Close savechanges:=True 'If you are testing, turn this to False
+    End If
+
+    'filter out the empty rows to buy them from QBP
+    With po_ws
+        .Columns("E:E").EntireColumn.AutoFit
+        .Range("A1:E1").AutoFilter
+        .Range("A:E").AutoFilter Field:=5, Criteria1:="="
+        .Range("A:E").AutoFilter Field:=2, Criteria1:="=*onz*", Operator:=xlOr, Criteria2:="=*ocg*"
+    End With
+    'get rid of "R" and "ONZ"
+    For Each item In po_ws.Range("B2:B" & po_ws.Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible)
+        item.Value = Replace(item.Value, "ONZ", "")
+        item.Value = Replace(item.Value, "R", "")
+    Next item
+    
+    'now, copy & paste onto the new workbook qbp
+    po_ws.Range("B2:C" & po_ws.Range("A" & Rows.Count).End(xlUp).Row).Copy qbp_wb.Sheets(1).Range("E2")
+    'do some remove duplicates, sumif to format
+    With qbp_wb.Sheets(1)
+        .Columns("E:E").Copy .Columns("B:B")
+        .Range("B:B").RemoveDuplicates Columns:=1, Header:=xlNo
+        .Range("C2").FormulaR1C1 = "=SUMIF(C[2],RC[-1],C[3])"
+        .Range("C2").AutoFill Destination:=.Range("C2:C" & .Range("B" & Rows.Count).End(xlUp).Row)
+        .Columns("B:C").Copy
+        .Columns("B:C").PasteSpecial xlPasteValues
+        .Columns("E:F").Delete
+        .Range("A1:C1").Value = "header"
+        .Range("A2:A" & .Range("B" & Rows.Count).End(xlUp).Row).Cells.FormulaR1C1 = "QOE"
+    End With
+    'save the new workbook and close it
+    qbp_wb.SaveAs file_dir & "qbp", xlCSV
+    qbp_wb.Close savechanges:=True
+    
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+End Sub
+Private Sub find(findResult As Range)
+'
+'   This sub checks if an item in po_ws can be found in purchased_ws
+'   It is called in the Daily_1 sub.
+'
+    
+    Dim rownumber, colnumber As Long
+    'if found, then check if there are restocks
+    If Not findResult Is Nothing Then
+        rownumber = findResult.Row
+        colnumber = findResult.Column
+        'if there are restocks, see if restock qty is enough
+        If purchased_ws.Cells(rownumber, colnumber + 3).Value <> 0 Then
+            'if enough restocks, then substract the qty, and highlight purchased_ws
+            If purchased_ws.Cells(rownumber, colnumber + 3).Value >= po_ws.Cells(i, 3).Value Then
+                purchased_ws.Cells(rownumber, colnumber + 2).Value = purchased_ws.Cells(rownumber, colnumber + 2).Value + po_ws.Cells(i, 3).Value
+                'paste the title onto column E
+                purchased_ws.Range(Cells(1, colnumber - 1), Cells(1, colnumber + 4)).Copy
+                po_ws.Cells(i, 5).PasteSpecial xlPasteValues
+                purchased_ws.Range(Cells(rownumber, colnumber - 1), Cells(rownumber, colnumber + 4)).Interior.Color = 13434777
+            'if not enough restocks, create a hyperlink and highlight po_ws
+            Else
+                If colnumber < 26 Then
+                    colletter = Chr(64 + colnumber)
+                Else
+                    colletter = Chr(Int(colnumber / 26) + 64) & Chr((colnumber Mod 26) + 64)
+                End If
+                po_ws.Cells(i, 5).Interior.Color = 65535
+                '!!!
+                '!!!Important: may need to change this subaddress if purchased_wb name changes
+                '!!!
+                po_ws.Hyperlinks.Add Anchor:=po_ws.Cells(i, 5), _
+                    Address:="", SubAddress:="'[Purchased Parts (Pad + Rotor).xlsx]PAD & ROTOR'!" & colletter & rownumber
+            End If
+        'if no restocks, try find another location
+        Else
+            Set findResult = purchased_ws.Range(Cells(1, colnumber + 1), Cells(100, 676)).find(What:=k, LookIn:=xlValues)
+            Call find(findResult)
+        End If
+    'if not found, then do nothing
+    End If
+End Sub
+Sub Daily_2()
+'
+'   This is the second sub to run. It sorts out the qty to search on Transbec.
+'   Be sure that you have run the Daily_1 sub and filled out the desired qty for QBP before you run this sub.
+'
+
+    Application.ScreenUpdating = False
+    
+    'You may want to change your worksheet name, workbook name here
+    Set po_wb = ActiveWorkbook
+    Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
+    
+    With po_ws
+        'refilter to get both pads and rotors that need purchase
+        .Range("A:E").AutoFilter Field:=5, Criteria1:="="
+        .Range("A:E").AutoFilter Field:=2
+        'copy & paste
+        .Range("B2:C" & po_ws.Range("A" & Rows.Count).End(xlUp).Row).Copy .Range("H2")
+        .Range("A:E").AutoFilter Field:=5
+        'replace
+        .Columns("H:H").Replace What:="p", Replacement:=""
+        .Columns("H:H").Replace What:="cdm", Replacement:=""
+        .Columns("H:H").Copy .Columns("K:K")
+        'remove duplicate
+        .Range("K:K").RemoveDuplicates Columns:=1, Header:=xlNo
+        'sumif
+        .Range("L2").FormulaR1C1 = "=SUMIF(C[-4],RC[-1],C[-3])"
+        .Range("L2").AutoFill Destination:=.Range("L2:L" & .Range("K" & Rows.Count).End(xlUp).Row)
+        .Columns("K:L").Copy
+        .Columns("K:L").PasteSpecial xlPasteValues
+        .Columns("G:J").Delete
+        .Range("G1").FormulaR1C1 = "Transbec"
+        .Range("G1").Select
+    End With
+
+    Application.ScreenUpdating = True
+End Sub
