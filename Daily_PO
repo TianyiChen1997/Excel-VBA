@@ -1,6 +1,6 @@
 Private po_wb, purchased_wb As Workbook
 Private po_ws, purchased_ws As Worksheet
-Private i As Integer
+Private i As Long
 Private findResult As Range
 Private k As Variant
 
@@ -174,5 +174,96 @@ Sub Daily_2()
         .Range("G1").Select
     End With
 
+    Application.ScreenUpdating = True
+End Sub
+Sub Daily_3()
+'
+'   This is the last sub to run. It fills out the rows in the orginial excel and colors them.
+'   You should run this after you have filled out every row in the po_ws.
+'
+    
+    Application.ScreenUpdating = False
+    
+'   This is to change the days elapsed manually
+    Dim today As Long
+    today = InputBox("What is the date today? Format: YYYYMMDD", "Enter an integer", 20220111)
+
+    'You may want to change your worksheets names, workbooks names and file directory here
+    Dim ori_po_wb As Workbook
+    Dim ori_po_ws, ori_wo_ws As Worksheet
+    Dim file_dir As String
+    
+    file_dir = "\\MAX-DRIVE\Public\Rui\Daily Reports\"
+    Set po_wb = ActiveWorkbook
+    Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
+    Set ori_po_wb = Workbooks.Open(file_dir & "po_wo_" & today & "-0715S.xlsx")
+    Set ori_po_ws = ori_po_wb.Worksheets("PURCHASE ORDERS")
+    Set ori_wo_ws = ori_po_wb.Worksheets("PURCHASE WORK ORDERS")
+    
+    'Loop through po_ws to copy & paste to "PURCHASE ORDERS"
+    i = 2
+    Do While po_ws.Cells(i, 4) = ""
+        po_ws.Cells(i, 6).Copy ori_po_ws.Cells(i, 6)
+        i = i + 1
+    Loop
+    'Sort in the originial work orders to match the sequence
+    With ori_wo_ws
+        .Range("A1:D1").AutoFilter
+        .AutoFilter.Sort.SortFields.Add2 Key:=Range("B1"), SortOn:=xlSortOnValues, Order:=xlAscending
+        .AutoFilter.Sort.Apply
+    End With
+    'Now copy & paste leftover to "PURCHASE WORK ORDERS"
+    po_ws.Range("F" & i & ":F" & po_ws.Range("A" & Rows.Count).End(xlDown).Row).Copy ori_wo_ws.Range("F2")
+    
+    'Loop through ori_po_ws to color rows with respective colors
+    i = 2
+    Do While ori_po_ws.Cells(i, 1) <> ""
+        If InStr(1, ori_po_ws.Cells(i, 6).Value, "transbec", 1) > 0 Then
+            ori_po_ws.Range(ori_po_ws.Cells(i, 1), ori_po_ws.Cells(i, 6)).Interior.Color = 15773696
+        Else
+            If InStr(1, ori_po_ws.Cells(i, 6).Value, "qbp", 1) > 0 Then
+                ori_po_ws.Range(ori_po_ws.Cells(i, 1), ori_po_ws.Cells(i, 6)).Interior.Color = 49407
+            Else
+                If InStr(1, ori_po_ws.Cells(i, 6).Value, "inroble", 1) > 0 Then
+                    ori_po_ws.Range(ori_po_ws.Cells(i, 1), ori_po_ws.Cells(i, 6)).Interior.Color = 5296274
+                Else
+                    If InStr(1, ori_po_ws.Cells(i, 6).Value, "vtrust", 1) > 0 Then
+                        ori_po_ws.Range(ori_po_ws.Cells(i, 1), ori_po_ws.Cells(i, 6)).Interior.Color = 5287936
+                    Else
+                        If InStr(1, ori_po_ws.Cells(i, 6).Value, "cbk", 1) > 0 Then
+                            ori_po_ws.Range(ori_po_ws.Cells(i, 1), ori_po_ws.Cells(i, 6)).Interior.Color = 12611584
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    i = i + 1
+    Loop
+    'Do the same looping through ori_wo_ws
+    i = 2
+    Do While ori_wo_ws.Cells(i, 1) <> ""
+        If InStr(1, ori_wo_ws.Cells(i, 6).Value, "transbec", 1) > 0 Then
+            ori_wo_ws.Range(ori_wo_ws.Cells(i, 1), ori_wo_ws.Cells(i, 6)).Interior.Color = 15773696
+        Else
+            If InStr(1, ori_wo_ws.Cells(i, 6).Value, "qbp", 1) > 0 Then
+                ori_wo_ws.Range(ori_wo_ws.Cells(i, 1), ori_wo_ws.Cells(i, 6)).Interior.Color = 49407
+            Else
+                If InStr(1, ori_wo_ws.Cells(i, 6).Value, "inroble", 1) > 0 Then
+                    ori_wo_ws.Range(ori_wo_ws.Cells(i, 1), ori_wo_ws.Cells(i, 6)).Interior.Color = 5296274
+                Else
+                    If InStr(1, ori_wo_ws.Cells(i, 6).Value, "vtrust", 1) > 0 Then
+                        ori_wo_ws.Range(ori_wo_ws.Cells(i, 1), ori_wo_ws.Cells(i, 6)).Interior.Color = 5287936
+                    Else
+                        If InStr(1, ori_wo_ws.Cells(i, 6).Value, "cbk", 1) > 0 Then
+                            ori_wo_ws.Range(ori_wo_ws.Cells(i, 1), ori_wo_ws.Cells(i, 6)).Interior.Color = 12611584
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    i = i + 1
+    Loop
+    'Close the orginial workbook when done
+    ori_po_wb.Close savechanges:=True
     Application.ScreenUpdating = True
 End Sub
