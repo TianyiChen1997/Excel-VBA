@@ -184,10 +184,11 @@ Sub Daily_3()
     
     Application.ScreenUpdating = False
     
-'   This is to change the days elapsed manually
-    Dim today As Long
+'   This is to change the days elapsed and time manually
+    Dim today, when As Long
     today = InputBox("What is the date today? Format: YYYYMMDD", "Enter an integer", 20220111)
-
+    when = InputBox("What time was the original file created?", "Enter an integer", 715)
+    
     'You may want to change your worksheets names, workbooks names and file directory here
     Dim ori_po_wb As Workbook
     Dim ori_po_ws, ori_wo_ws As Worksheet
@@ -196,7 +197,7 @@ Sub Daily_3()
     file_dir = "\\MAX-DRIVE\Public\Rui\Daily Reports\"
     Set po_wb = ActiveWorkbook
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
-    Set ori_po_wb = Workbooks.Open(file_dir & "po_wo_" & today & "-0716S.xlsx")
+    Set ori_po_wb = Workbooks.Open(file_dir & "po_wo_" & today & "-0" & when & "S.xlsx")
     Set ori_po_ws = ori_po_wb.Worksheets("PURCHASE ORDERS")
     Set ori_wo_ws = ori_po_wb.Worksheets("PURCHASE WORK ORDERS")
     
@@ -263,6 +264,8 @@ Sub Daily_3()
         End If
     i = i + 1
     Loop
+    ori_wo_ws.Columns("F:F").AutoFit
+    ori_po_ws.Columns("F:F").AutoFit
     'Close the orginial workbook when done
     ori_po_wb.Close savechanges:=True
     Application.ScreenUpdating = True
