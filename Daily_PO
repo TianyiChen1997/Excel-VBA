@@ -196,14 +196,14 @@ Sub Daily_3()
     file_dir = "\\MAX-DRIVE\Public\Rui\Daily Reports\"
     Set po_wb = ActiveWorkbook
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
-    Set ori_po_wb = Workbooks.Open(file_dir & "po_wo_" & today & "-0715S.xlsx")
+    Set ori_po_wb = Workbooks.Open(file_dir & "po_wo_" & today & "-0716S.xlsx")
     Set ori_po_ws = ori_po_wb.Worksheets("PURCHASE ORDERS")
     Set ori_wo_ws = ori_po_wb.Worksheets("PURCHASE WORK ORDERS")
     
     'Loop through po_ws to copy & paste to "PURCHASE ORDERS"
     i = 2
     Do While po_ws.Cells(i, 4) = ""
-        po_ws.Cells(i, 6).Copy ori_po_ws.Cells(i, 6)
+        po_ws.Cells(i, 5).Copy ori_po_ws.Cells(i, 6)
         i = i + 1
     Loop
     'Sort in the originial work orders to match the sequence
@@ -213,7 +213,7 @@ Sub Daily_3()
         .AutoFilter.Sort.Apply
     End With
     'Now copy & paste leftover to "PURCHASE WORK ORDERS"
-    po_ws.Range("F" & i & ":F" & po_ws.Range("A" & Rows.Count).End(xlDown).Row).Copy ori_wo_ws.Range("F2")
+    po_ws.Range("E" & i & ":E" & po_ws.Range("A" & Rows.Count).End(xlDown).Row).Copy ori_wo_ws.Range("F2")
     
     'Loop through ori_po_ws to color rows with respective colors
     i = 2
