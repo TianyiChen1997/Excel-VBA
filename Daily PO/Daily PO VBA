@@ -3,6 +3,7 @@ Private po_ws, purchased_ws As Worksheet
 Private i As Long
 Private findResult As Range
 Private k As Variant
+Private p_ws_name, p_wb_name As String
 
 Sub Daily_1()
 '
@@ -16,7 +17,6 @@ Sub Daily_1()
     Application.DisplayAlerts = False
     
     'You may want to change your worksheets names, workbooks names and file directory here
-    'If you want to change names of purchased_wb or purchased_ws, you also need to go to the find function to change them there
     Dim item As Range
     Dim qbp_wb As Workbook
     Dim wo_ws As Worksheet
@@ -24,12 +24,14 @@ Sub Daily_1()
     
     file_dir = "C:\Users\rustyw\Desktop\"
     purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    p_wb_name = "Purchased Parts (Pad + Rotor).xlsx"
+    p_ws_name = "PAD & ROTOR"
     Set po_wb = ActiveWorkbook
     Set qbp_wb = Workbooks.Add
-    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & "Purchased Parts (Pad + Rotor).xlsx")
+    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & p_wb_name)
     Set wo_ws = po_wb.Worksheets("PURCHASE WORK ORDERS")
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
-    Set purchased_ws = purchased_wb.Worksheets("PAD & ROTOR")
+    Set purchased_ws = purchased_wb.Worksheets(p_ws_name)
     
     
     'Sort the wo_ws for easy reading
@@ -125,11 +127,8 @@ Private Sub find(findResult As Range)
                     colletter = Chr(Int(colnumber / 26) + 64) & Chr((colnumber Mod 26) + 64)
                 End If
                 po_ws.Cells(i, 5).Interior.Color = 65535
-                '!!!
-                '!!!Important: may need to change this subaddress if purchased_wb name changes
-                '!!!
                 po_ws.Hyperlinks.Add Anchor:=po_ws.Cells(i, 5), _
-                    Address:="", SubAddress:="'[Purchased Parts (Pad + Rotor).xlsx]PAD & ROTOR'!" & colletter & rownumber
+                    Address:="", SubAddress:="'[" & p_wb_name & "]" & p_ws_name & "'!" & colletter & rownumber
             End If
         'if no restocks, try find another location
         Else
