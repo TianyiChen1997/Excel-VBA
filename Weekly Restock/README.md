@@ -1,1 +1,3 @@
+It is for Rotor/Pad Weekly Restock Summary. It first updates the "Total Amount" data using <ta.csv> and "PowerBI Sales" data using <onz.csv>, <cnz.csv>, <afn.csv>, and <cdm.csv>. It then cleans up the worksheets, and calculates the "Buy Qty". 
 
+There are two VBAs designated for Rotor and Pad. Two subs are within each VBA, and they are "Rotor/Pad_Cleanup" and "Rotor/Pad_Buy". One is for cleanup and data update, and the other one is for calculation. They are called together under the sub "Rotor/Pad_Weekly". So just open the excel workbook <Rotor/PAD Summary.xlsm>, run the "Rotor/Pad_Weekly" sub, and we are done.
