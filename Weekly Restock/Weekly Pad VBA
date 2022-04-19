@@ -230,13 +230,17 @@ Private Sub Pad_Buy()
 '
 
     Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
     
 '   You may want to change your worksheets names, workbook name here
     Dim summary_ws, buy_ws As Worksheet
-    Dim main_wb As Workbook
-    Dim last_row As Long
+    Dim main_wb, top100 As Workbook
+    Dim last_row, last_row_buy As Long
+    Dim file_dir As String
     
+    file_dir = "C:\Users\rustyw\Desktop\"
     Set main_wb = Workbooks("PAD Summary")
+    Set top100 = Workbooks.Open(file_dir & "pads_hardware.xlsx")
     Set summary_ws = main_wb.Worksheets("PAD Summary")
     Set buy_ws = main_wb.Worksheets("Pad Restock")
     last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
@@ -256,9 +260,44 @@ Private Sub Pad_Buy()
 '   now we copy & paste the buy qty onto the "Pad Restock" sheet, then we are done
     Union(summary_ws.Range("B3:B" & last_row).SpecialCells(xlCellTypeVisible), summary_ws.Range("AN3:AN" & last_row).SpecialCells(xlCellTypeVisible)).Copy buy_ws.Range("A2")
     summary_ws.Range("A:BA").AutoFilter Field:=40
+
+'   New feature: Now we need to check if pad is in the top 100, and assign product code accordingly
+'   Copy the worksheet first, then close the workbook.
+    top100.Worksheets(1).Copy before:=summary_ws
+    top100.Close savechanges:=False
+'   Then we give each part its product code
+    last_row_buy = buy_ws.Range("A" & Rows.Count).End(xlUp).Row
+    With buy_ws
+        .Range("C2").FormulaR1C1 = _
+            "=IFERROR(VLOOKUP(RC[-2],'Sheet1'!C1:C2,2,FALSE),""NA"")"
+        .Range("C2").AutoFill Destination:=.Range("C2:C" & last_row_buy)
+        .Range("D2").FormulaR1C1 = _
+            "=IF(RC[-1]=""NA"",""PMD""&RC[-3],"""")"
+        .Range("D2").AutoFill Destination:=.Range("D2:D" & last_row_buy)
+        .Range("E2").FormulaR1C1 = _
+            "=IF(RC[-1]<>"""",""VTD""&RC[-4],"""")"
+        .Range("E2").AutoFill Destination:=.Range("E2:E" & last_row_buy)
+        .Range("F2").FormulaR1C1 = _
+            "=IF(RC[-1]<>"""",RC[-4],"""")"
+        .Range("F2").AutoFill Destination:=.Range("F2:F" & last_row_buy)
+        .Range("G2").FormulaR1C1 = _
+            "=IF(RC[-4]=0,""PMD""&RC[-6]&""S"","""")"
+        .Range("G2").AutoFill Destination:=.Range("G2:G" & last_row_buy)
+        .Range("H2").FormulaR1C1 = _
+            "=IF(RC[-1]<>"""",""BCD""&RC[-7],"""")"
+        .Range("H2").AutoFill Destination:=.Range("H2:H" & last_row_buy)
+        .Range("I2").FormulaR1C1 = _
+            "=IF(RC[-1]<>"""",RC[-7],"""")"
+        .Range("I2").AutoFill Destination:=.Range("I2:I" & last_row_buy)
+    End With
+    buy_ws.Range("C2:I" & last_row_buy).Value = buy_ws.Range("C2:I" & last_row_buy).Value
+'   Lastly, clean up
+    buy_ws.Range("C2:C" & last_row_buy).ClearContents
+    main_wb.Worksheets(1).Delete
     
     Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
     buy_ws.Activate
-    Range("A2:B" & Range("A" & Rows.Count).End(xlUp).Row).Select
+    Range("A1").Select
 
 End Sub
