@@ -147,8 +147,18 @@ Sub Daily_2()
     Application.ScreenUpdating = False
     
     'You may want to change your worksheet name, workbook name here
+    Dim cell As Range
+    Dim top100 As Workbook
+    Dim file_dir As String
+    
+    file_dir = "C:\Users\rustyw\Desktop\"
     Set po_wb = ActiveWorkbook
+    Set top100 = Workbooks.Open(file_dir & "pads_hardware.xlsx")
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
+    
+'   Copy the top100 worksheet first, then close the workbook.
+    top100.Worksheets(1).Copy after:=po_ws
+    top100.Close savechanges:=False
     
     With po_ws
         'refilter to get both pads and rotors that need purchase
@@ -157,9 +167,6 @@ Sub Daily_2()
         'copy & paste
         .Range("B2:C" & po_ws.Range("A" & Rows.Count).End(xlUp).Row).Copy .Range("H2")
         .Range("A:E").AutoFilter Field:=5
-        'replace
-        .Columns("H:H").Replace What:="p", Replacement:=""
-        .Columns("H:H").Replace What:="cdm", Replacement:=""
         .Columns("H:H").Copy .Columns("K:K")
         'remove duplicate
         .Range("K:K").RemoveDuplicates Columns:=1, Header:=xlNo
@@ -170,8 +177,21 @@ Sub Daily_2()
         .Columns("K:L").PasteSpecial xlPasteValues
         .Columns("G:J").Delete
         .Range("G1").FormulaR1C1 = "Transbec"
-        .Range("G1").Select
+        'now give pad appropriate product code based on top100
+        For Each cell In .Range("G2:G" & .Range("G" & Rows.Count).End(xlDown).Row)
+            If cell Like "*CDM" Then
+                cell.Replace What:="cdm", Replacement:=""
+                cell.Replace What:="p", Replacement:=""
+                cell.Offset(0, -1).FormulaR1C1 = _
+                    "=IFERROR(VLOOKUP(RC[1],Sheet1!C[-5]:C[-4],2,FALSE),""no hardware"")"
+                cell.Offset(0, 2).FormulaR1C1 = _
+                    "=IF(RC[-3]=""no hardware"",""PMD""&RC[-2],""PMD""&RC[-2]&""S"")"
+                cell.Offset(0, 3).Value = cell.Offset(0, 1)
+            End If
+        Next cell
     End With
+    po_ws.Activate
+    Range("G1").Select
 
     Application.ScreenUpdating = True
 End Sub
