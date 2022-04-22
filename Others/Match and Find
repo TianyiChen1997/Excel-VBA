@@ -1,0 +1,99 @@
+Sub match_apr_mar()
+'
+'   It compares three sheets, then either append items to the left or to the end depending on whether it shows up before or not.
+'   It also does some cleaning and filtering afterwards.
+'
+    
+    Dim i As Long
+    Dim k As String
+    Dim findresult, cell As Range
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    'sheet2 first
+    i = 2
+    Do While Worksheets(2).Cells(i, 1).Value <> ""
+        k = Worksheets(2).Cells(i, 1).Value
+        Set findresult = Worksheets(1).Columns("A:A").find(What:=k, LookIn:=xlValues)
+        'if find, then append to the left
+        If Not findresult Is Nothing Then
+            Worksheets(2).Cells(i, 4).Copy Worksheets(1).Cells(findresult.Row, 5)
+        'if NOT find, then append to the end
+        Else
+            Worksheets(2).Range(Worksheets(2).Cells(i, 1), Worksheets(2).Cells(i, 3)).Copy Worksheets(1).Range("A" & Worksheets(1).Range("A" & Rows.Count).End(xlUp).Row + 1)
+            Worksheets(2).Cells(i, 4).Copy Worksheets(1).Range("E" & Worksheets(1).Range("A" & Rows.Count).End(xlUp).Row)
+        End If
+        i = i + 1
+    Loop
+    
+    'now do the same for sheet3
+    i = 2
+    Do While Worksheets(3).Cells(i, 1).Value <> ""
+        k = Worksheets(3).Cells(i, 1).Value
+        Set findresult = Worksheets(1).Columns("A:A").find(What:=k, LookIn:=xlValues)
+        'if find, then append to the left
+        If Not findresult Is Nothing Then
+            Worksheets(3).Cells(i, 4).Copy Worksheets(1).Cells(findresult.Row, 6)
+        'if NOT find, then append to the end
+        Else
+            Worksheets(3).Range(Worksheets(3).Cells(i, 1), Worksheets(3).Cells(i, 3)).Copy Worksheets(1).Range("A" & Worksheets(1).Range("A" & Rows.Count).End(xlUp).Row + 1)
+            Worksheets(3).Cells(i, 4).Copy Worksheets(1).Range("F" & Worksheets(1).Range("A" & Rows.Count).End(xlUp).Row)
+        End If
+        i = i + 1
+    Loop
+    
+    'now do some cleaning
+    i = 2
+    With Worksheets(1)
+        .Columns("B:C").Delete
+        .Columns("A:A").AutoFit
+        .Range("B1").Value = "Apr-2022"
+        .Range("C1").Value = "Apr-2021"
+        .Range("D1").Value = "Mar-2022"
+        'times 1.5 because today is only Apr 20
+        For Each cell In .Range("B2:B" & Range("B1048576").End(xlUp).Row)
+            cell.Value = cell.Value * 1.5
+        Next cell
+        'fill empty cell with 0
+        Do While .Cells(i, 1).Value <> ""
+            If .Cells(i, 2) = "" Then
+                .Cells(i, 2).Value = 0
+            End If
+            If .Cells(i, 3) = "" Then
+                .Cells(i, 3).Value = 0
+            End If
+            If .Cells(i, 4) = "" Then
+                .Cells(i, 4).Value = 0
+            End If
+        i = i + 1
+        Loop
+        .Range("E1").Value = "Apr-Mar Difference"
+        .Range("F1").Value = "Year-On-Year Ratio"
+        .Range("G1").Value = "Month-On-Month Ratio"
+        'analysis time
+        .Range("E2").FormulaR1C1 = "=RC[-3]-RC[-1]"
+        .Range("E2").AutoFill Destination:=.Range("E2:E" & .Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("F2").FormulaR1C1 = "=IF(RC[-3]=0,IF(RC[-4]=0,0,1),RC[-4]/RC[-3]-1)"
+        .Range("F2").AutoFill Destination:=.Range("F2:F" & .Range("A" & Rows.Count).End(xlUp).Row)
+        .Range("G2").FormulaR1C1 = "=IF(RC[-3]=0,IF(RC[-5]=0,0,1),RC[-5]/RC[-3]-1)"
+        .Range("G2").AutoFill Destination:=.Range("G2:G" & .Range("A" & Rows.Count).End(xlUp).Row)
+        .Columns("F:G").Style = "Percent"
+        With .Range("A:G")
+            .AutoFilter
+            .AutoFilter Field:=5, Criteria1:=">=20", Operator:=xlOr, Criteria2:="<=-20"
+            .AutoFilter Field:=7, Criteria1:=">=0.5", Operator:=xlOr, Criteria2:="<=-0.5"
+        End With
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("E1:E" & Range("A1048576").End(xlUp).Row), Order:=xlDescending
+            .Apply
+        End With
+        .Columns("F:F").EntireColumn.Hidden = True
+        .Columns("C:C").EntireColumn.Hidden = True
+    End With
+    
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+
+End Sub
