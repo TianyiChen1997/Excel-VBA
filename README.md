@@ -1,13 +1,15 @@
 # Excel VBA Overview
 
-I write code to speed up some of my repetitive daily work.
+## Currently Available:
 
-Currently Available:
+* "Weekly Restock" for update, cleanup, and calculation for the Weekly Restock Summary
 
-"Weekly Restock" for update, cleanup, and calculation for the Weekly Restock Summary
+* "Daily PO" for daily purchase
 
-"Daily PO" for daily purchase
+* More VBA code in the "Others" folder
 
-More VBA code in the "Others" folder
+## Working On:
+
+* Summary TA IP 
 
 
