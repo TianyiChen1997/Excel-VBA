@@ -1,6 +1,6 @@
 # Excel VBA Overview
 
-I write these codes to speed up some of my repetitive daily work.
+I write code to speed up some of my repetitive daily work.
 
 Currently Available:
 
