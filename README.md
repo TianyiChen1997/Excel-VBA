@@ -8,6 +8,6 @@ Currently Available:
 
 "Daily PO" for daily purchase
 
-
+More VBA code in the "Others" folder
 
 
