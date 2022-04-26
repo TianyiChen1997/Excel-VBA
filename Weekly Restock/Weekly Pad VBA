@@ -35,13 +35,20 @@ Private Sub Pad_Cleanup()
     Set main_wb = Workbooks("PAD Summary")
     Set summary_ws = main_wb.Worksheets("PAD Summary")
     Set buy_ws = main_wb.Worksheets("Pad Restock")
-    Set ta_ws = main_wb.Worksheets("TA")
-    Set cdm_ta_ws = main_wb.Worksheets("CDM TA")
-    Set afn_ta_ws = main_wb.Worksheets("AFN TA")
-    Set cdp_ta_ws = main_wb.Worksheets("CDP TA")
-    Set cdm_pbi_ws = main_wb.Worksheets("CDM PBI")
-    Set afn_pbi_ws = main_wb.Worksheets("AFN PBI")
-    Set p_ws = main_wb.Worksheets("Purchased")
+    Set ta_ws = main_wb.Worksheets.Add
+    ta_ws.Name = "TA"
+    Set cdm_ta_ws = main_wb.Worksheets.Add
+    cdm_ta_ws.Name = "CDM TA"
+    Set afn_ta_ws = main_wb.Worksheets.Add
+    afn_ta_ws.Name = "AFN TA"
+    Set cdp_ta_ws = main_wb.Worksheets.Add
+    cdp_ta_ws.Name = "CDP TA"
+    Set cdm_pbi_ws = main_wb.Worksheets.Add
+    cdm_pbi_ws.Name = "CDM PBI"
+    Set afn_pbi_ws = main_wb.Worksheets.Add
+    afn_pbi_ws.Name = "AFN PBI"
+    Set p_ws = main_wb.Worksheets.Add
+    p_ws.Name = "Purchased"
     Set pad_rotor = purchased_wb.Worksheets("PAD & ROTOR")
 
     last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
@@ -50,13 +57,13 @@ Private Sub Pad_Cleanup()
 '   To get started, need to copy & and paste TA and PBI data onto the main workbook
 '   TA
     ta_wb.Worksheets(1).Range("A:B").Copy ta_ws.Range("A1")
-    ta_wb.Close SaveChanges:=False
+    ta_wb.Close savechanges:=False
 '   CDM PBI
     cdm_wb.Worksheets(1).Range("A:E").Copy cdm_pbi_ws.Range("A1")
-    cdm_wb.Close SaveChanges:=False
+    cdm_wb.Close savechanges:=False
 '   AFN PBI
     afn_wb.Worksheets(1).Range("A:C").Copy afn_pbi_ws.Range("A1")
-    afn_wb.Close SaveChanges:=False
+    afn_wb.Close savechanges:=False
 
 '   Then, filter TA to get CDM, CDP and AFN TA
 '   CDM TA
@@ -93,7 +100,7 @@ Private Sub Pad_Cleanup()
             row_count = row_count + last_row_p - 3
         Next i
     End With
-    purchased_wb.Close SaveChanges:=False
+    purchased_wb.Close savechanges:=False
 
 
 '   Now, time to update values
@@ -202,19 +209,17 @@ Private Sub Pad_Cleanup()
 '
 '   Lastly, clear old contents
     With buy_ws
-        .Range("A2:B22").ClearContents
-        .Range("A23:U59").ClearContents
-        .Range("A23:B23").Copy
-        .Range("A23:U59").PasteSpecial xlPasteFormats
+        .Range("A2:AA100").ClearContents
+        .Range("A1").Copy
+        .Range("J2:AA100").PasteSpecial xlPasteFormats
     End With
-    ta_ws.Columns("A:B").ClearContents
-    ta_ws.Columns("A:B").ClearContents
-    cdm_ta_ws.Columns("A:B").ClearContents
-    cdm_pbi_ws.Columns("A:I").ClearContents
-    afn_ta_ws.Columns("A:B").ClearContents
-    afn_pbi_ws.Columns("A:C").ClearContents
-    cdp_ta_ws.Columns("A:B").ClearContents
-    p_ws.Columns("A:I").ClearContents
+    ta_ws.Delete
+    cdm_ta_ws.Delete
+    cdm_pbi_ws.Delete
+    afn_ta_ws.Delete
+    afn_pbi_ws.Delete
+    cdp_ta_ws.Delete
+    p_ws.Delete
     
     summary_ws.Activate
     Range("AN3").Select
