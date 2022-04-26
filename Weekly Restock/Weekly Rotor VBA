@@ -35,12 +35,18 @@ Private Sub Rotor_Cleanup()
     Set main_wb = Workbooks("Rotor Summary")
     Set summary_ws = main_wb.Worksheets("ROTOR SUMMARY")
     Set buy_ws = main_wb.Worksheets("Buy")
-    Set ta_ws = main_wb.Worksheets("TA")
-    Set onz_ta_ws = main_wb.Worksheets("ONZ TA")
-    Set cnz_ta_ws = main_wb.Worksheets("CNZ TA")
-    Set onz_pbi_ws = main_wb.Worksheets("ONZ PBI")
-    Set cnz_pbi_ws = main_wb.Worksheets("CNZ PBI")
-    Set p_ws = main_wb.Worksheets("Purchased")
+    Set ta_ws = main_wb.Worksheets.Add
+    ta_ws.Name = "TA"
+    Set onz_ta_ws = main_wb.Worksheets.Add
+    onz_ta_ws.Name = "ONZ TA"
+    Set cnz_ta_ws = main_wb.Worksheets.Add
+    cnz_ta_ws.Name = "CNZ TA"
+    Set onz_pbi_ws = main_wb.Worksheets.Add
+    onz_pbi_ws.Name = "ONZ PBI"
+    Set cnz_pbi_ws = main_wb.Worksheets.Add
+    cnz_pbi_ws.Name = "CNZ PBI"
+    Set p_ws = main_wb.Worksheets.Add
+    p_ws.Name = "Purchased"
     Set pad_rotor = purchased_wb.Worksheets("PAD & ROTOR")
 
     last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
@@ -49,13 +55,13 @@ Private Sub Rotor_Cleanup()
 '   To get started, need to copy & and paste TA and PBI data onto the main workbook
 '   TA
     ta_wb.Worksheets(1).Range("A:B").Copy ta_ws.Range("A1")
-    ta_wb.Close SaveChanges:=False
+    ta_wb.Close savechanges:=False
 '   ONZ PBI
     onz_wb.Worksheets(1).Range("A:E").Copy onz_pbi_ws.Range("A1")
-    onz_wb.Close SaveChanges:=False
+    onz_wb.Close savechanges:=False
 '   CNZ PBI
     cnz_wb.Worksheets(1).Range("A:E").Copy cnz_pbi_ws.Range("A1")
-    cnz_wb.Close SaveChanges:=False
+    cnz_wb.Close savechanges:=False
 
 '   Then, filter TA to get ONZ TA and CNZ TA
 '   ONZ TA
@@ -86,7 +92,7 @@ Private Sub Rotor_Cleanup()
             row_count = row_count + last_row_p - 3
         Next i
     End With
-    purchased_wb.Close SaveChanges:=False
+    purchased_wb.Close savechanges:=False
     
 
 '   Now, time to update values
@@ -175,19 +181,18 @@ Private Sub Rotor_Cleanup()
 '
 '   Lastly, clear old contents
     With buy_ws
-        .Range("A3:AA139").ClearContents
-        .Range("A83:B83").Copy
-        .Range("A3:B82").PasteSpecial xlPasteFormats
-        .Range("A83:B83").Copy
-        .Range("A83:AA139").PasteSpecial xlPasteFormats
+        .Range("A3:AH200").ClearContents
+        .Range("A200:B200").Copy
+        .Range("A3:B105").PasteSpecial xlPasteFormats
+        .Range("A200:B200").Copy
+        .Range("A105:AH200").PasteSpecial xlPasteFormats
     End With
-    ta_ws.Columns("A:B").ClearContents
-    ta_ws.Columns("A:B").ClearContents
-    onz_ta_ws.Columns("A:B").ClearContents
-    onz_pbi_ws.Columns("A:I").ClearContents
-    cnz_ta_ws.Columns("A:B").ClearContents
-    cnz_pbi_ws.Columns("A:I").ClearContents
-    p_ws.Columns("A:I").ClearContents
+    ta_ws.Delete
+    onz_ta_ws.Delete
+    onz_pbi_ws.Delete
+    cnz_ta_ws.Delete
+    cnz_pbi_ws.Delete
+    p_ws.Delete
     
     summary_ws.Activate
     Range("CG3").Select
