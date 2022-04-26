@@ -1,0 +1,523 @@
+Private day, finish, file_dir, pos_file_dir As String
+Private ta_wb, pos_wb, wb As Workbook
+Private pos_rotor_ws, pos_cdm_ws, pos_afn_ws As Worksheet
+
+Sub Summary_TA_IP()
+'
+'   It is the main sub to run. It will redirect to the specific sub based on user input.
+'   It will update the TA and IP for the designated Summary workbook.
+'
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    'Need to specify POS and finish
+    day = InputBox("What is the date of the latest POS? Format: MM.DD.YYYY", , "01.01.2000")
+    finish = InputBox("Which finish is it? Enter in lower case.", , "onz")
+    'If input is incorrect, halt.
+    If InStr("," & "onz,cnz,cdm,afn,scb,ocg" & ",", "," & finish & ",") = 0 Then
+        MsgBox "Invalid input. Try either onz, cnz, cdm, afn, scb, or ocg"
+        End
+    End If
+    
+    'You may want to change your worksheets names, workbooks names and file directory here
+    file_dir = "C:\Users\rustyw\Desktop\"
+    pos_file_dir = "C:\Users\rustyw\Dropbox\Purchasing\PO Status\"
+    Set wb = ActiveWorkbook
+    Set pos_wb = Workbooks.Open(file_dir & "POS_" & day & ".xlsx")
+    Set ta_wb = Workbooks.Open(file_dir & "ta.csv")
+    Set pos_rotor_ws = pos_wb.Worksheets("Brake Rotor")
+    Set pos_cdm_ws = pos_wb.Worksheets("CDM")
+    Set pos_afn_ws = pos_wb.Worksheets("AFN")
+
+    'run desired sub based on user input
+    Select Case finish
+        Case "cnz"
+            Call CNZ
+        Case "ocg"
+            Call OCG
+        Case "onz"
+            Call ONZ
+        Case "scb"
+            Call SCB
+        Case "cdm"
+            Call CDM
+        Case "afn"
+            Call AFN
+    End Select
+    
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+    
+End Sub
+Private Sub CNZ()
+'
+'   It is for CNZ Summary TA and IP update.
+'
+
+    'You may want to change your worksheets names here
+    Dim main_ws, ta_ws, ip_ws As Worksheet
+    Set main_ws = wb.Worksheets("cnz")
+    Set ta_ws = wb.Worksheets("ta")
+    Set ip_ws = wb.Worksheets("IP")
+    
+    'Work on TA first
+    'Copy & paste TA and then close the ta workbook
+    ta_ws.Columns("A:B").ClearContents
+    With ta_wb.Worksheets(1)
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*cnz"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ta_ws.Range("A1")
+    End With
+    ta_wb.Close savechanges:=False
+    'Replace to format, then TA is done
+    With ta_ws
+        .Columns("A").Replace What:="cnz", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+    End With
+    
+    'Next, work on IP
+    With pos_rotor_ws
+        'Clear filters if there is any
+        If .FilterMode = True Then
+            .ShowAllData
+        End If
+        'refilter Finish, Status, Factory to CNZ, In Production, HL
+        .Range("A:O").AutoFilter Field:=4, Criteria1:="CNZ"
+        .Range("A:O").AutoFilter Field:=7, Criteria1:="In Production"
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="HL"
+        'Copy & paste IP
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("I1")
+        'Change Factory to RD and copy & paste again
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="RD"
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("O1")
+    End With
+    'We are done copying, so close the POS workbook now
+    pos_wb.Close savechanges:=False
+    
+    'Now, need to put copied data in appropricate places
+    With ip_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        .Range("E2:F" & .Range("E1048576").End(xlUp).Row).ClearContents
+        'Then, work on HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("I1:L1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("J1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("J2:J" & .Range("J1048576").End(xlUp).Row).Copy .Range("I2")
+        'Remove duplicates and sumif
+        .Range("I2:I" & .Range("I1048576").End(xlUp).Row).Copy .Range("M2")
+        .Range("M2:M" & .Range("M1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("N2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("N2").AutoFill Destination:=.Range("N2:N" & .Range("M1048576").End(xlUp).Row)
+        .Range("M2:N" & .Range("M1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Then, work on RD ones, which are just like HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("O1:R1").AutoFilter
+        .Range("O1:R1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("P1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("P2:P" & .Range("P1048576").End(xlUp).Row).Copy .Range("O2")
+        'Remove duplicates and sumif
+        .Range("O2:O" & .Range("O1048576").End(xlUp).Row).Copy .Range("S2")
+        .Range("S2:S" & .Range("S1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("T2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("T2").AutoFill Destination:=.Range("T2:T" & .Range("S1048576").End(xlUp).Row)
+        .Range("S2:T" & .Range("S1048576").End(xlUp).Row).Copy
+        .Range("E2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("I:T").Delete
+    End With
+        
+End Sub
+Private Sub OCG()
+'
+'   It is for OCG Summary TA and IP update.
+'
+
+    'You may want to change your worksheets names here
+    Dim main_ws, ta_ws, ip_ws As Worksheet
+    Set main_ws = wb.Worksheets("ocg")
+    Set ta_ws = wb.Worksheets("ta")
+    Set ip_ws = wb.Worksheets("IP")
+    
+    'Work on TA first
+    'Copy & paste TA and then close the ta workbook
+    ta_ws.Columns("A:B").ClearContents
+    With ta_wb.Worksheets(1)
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=ocg*"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ta_ws.Range("A1")
+    End With
+    'TA is done, close it now
+    ta_wb.Close savechanges:=False
+
+    'Next, work on IP
+    With pos_rotor_ws
+        'Clear filters if there is any
+        If .FilterMode = True Then
+            .ShowAllData
+        End If
+        'refilter Finish, Status, Factory to OCG, In Production, HL
+        .Range("A:O").AutoFilter Field:=4, Criteria1:="OCG"
+        .Range("A:O").AutoFilter Field:=7, Criteria1:="In Production"
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="HL"
+        'Copy & paste IP
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("I1")
+        'Change Factory to RD and copy & paste again
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="RD"
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("O1")
+    End With
+    'We are done copying, so close the POS workbook now
+    pos_wb.Close savechanges:=False
+    
+    'Now, need to put copied data in appropricate places
+    With ip_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        .Range("D2:E" & .Range("D1048576").End(xlUp).Row).ClearContents
+        'Then, work on HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("I1:L1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("J1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("J2:J" & .Range("J1048576").End(xlUp).Row).Copy .Range("I2")
+        'Remove duplicates and sumif
+        .Range("I2:I" & .Range("I1048576").End(xlUp).Row).Copy .Range("M2")
+        .Range("M2:M" & .Range("M1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("N2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("N2").AutoFill Destination:=.Range("N2:N" & .Range("M1048576").End(xlUp).Row)
+        .Range("M2:N" & .Range("M1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Then, work on RD ones, which are just like HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("O1:R1").AutoFilter
+        .Range("O1:R1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("P1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("P2:P" & .Range("P1048576").End(xlUp).Row).Copy .Range("O2")
+        'Remove duplicates and sumif
+        .Range("O2:O" & .Range("O1048576").End(xlUp).Row).Copy .Range("S2")
+        .Range("S2:S" & .Range("S1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("T2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("T2").AutoFill Destination:=.Range("T2:T" & .Range("S1048576").End(xlUp).Row)
+        .Range("S2:T" & .Range("S1048576").End(xlUp).Row).Copy
+        .Range("D2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("I:T").Delete
+    End With
+        
+End Sub
+Private Sub ONZ()
+'
+'   It is for ONZ Summary TA and IP update.
+'
+
+    'You may want to change your worksheets names here
+    Dim main_ws, ta_ws, ip_ws As Worksheet
+    Set main_ws = wb.Worksheets("onz")
+    Set ta_ws = wb.Worksheets("ta")
+    Set ip_ws = wb.Worksheets("IP")
+    
+    'Work on TA first
+    'Copy & paste TA and then close the ta workbook
+    ta_ws.Columns("A:B").ClearContents
+    With ta_wb.Worksheets(1)
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*onz"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ta_ws.Range("A1")
+    End With
+    ta_wb.Close savechanges:=False
+    'Replace to format, then TA is done
+    With ta_ws
+        .Columns("A").Replace What:="onz", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+    End With
+
+    'Next, work on IP
+    With pos_rotor_ws
+        'Clear filters if there is any
+        If .FilterMode = True Then
+            .ShowAllData
+        End If
+        'refilter Finish, Status, Factory to ONZ, In Production, HL
+        .Range("A:O").AutoFilter Field:=4, Criteria1:="ONZ"
+        .Range("A:O").AutoFilter Field:=7, Criteria1:="In Production"
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="HL"
+        'Copy & paste IP
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("I1")
+        'Change Factory to RD and copy & paste again
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="RD"
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("O1")
+    End With
+    'We are done copying, so close the POS workbook now
+    pos_wb.Close savechanges:=False
+    
+    'Now, need to put copied data in appropricate places
+    With ip_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        .Range("D2:E" & .Range("D1048576").End(xlUp).Row).ClearContents
+        'Then, work on HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("I1:L1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("J1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("J2:J" & .Range("J1048576").End(xlUp).Row).Copy .Range("I2")
+        'Remove duplicates and sumif
+        .Range("I2:I" & .Range("I1048576").End(xlUp).Row).Copy .Range("M2")
+        .Range("M2:M" & .Range("M1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("N2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("N2").AutoFill Destination:=.Range("N2:N" & .Range("M1048576").End(xlUp).Row)
+        .Range("M2:N" & .Range("M1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Then, work on RD ones, which are just like HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("O1:R1").AutoFilter
+        .Range("O1:R1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("P1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("P2:P" & .Range("P1048576").End(xlUp).Row).Copy .Range("O2")
+        'Remove duplicates and sumif
+        .Range("O2:O" & .Range("O1048576").End(xlUp).Row).Copy .Range("S2")
+        .Range("S2:S" & .Range("S1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("T2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("T2").AutoFill Destination:=.Range("T2:T" & .Range("S1048576").End(xlUp).Row)
+        .Range("S2:T" & .Range("S1048576").End(xlUp).Row).Copy
+        .Range("D2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("I:T").Delete
+    End With
+        
+End Sub
+Private Sub SCB()
+'
+'   It is for SCB Summary TA and IP update.
+'
+
+    'You may want to change your worksheets names here
+    Dim main_ws, ta_ws, ip_ws As Worksheet
+    Set main_ws = wb.Worksheets("scb")
+    Set ta_ws = wb.Worksheets("ta")
+    Set ip_ws = wb.Worksheets("IP")
+    
+    'Work on TA first
+    'Copy & paste TA and then close the ta workbook
+    ta_ws.Columns("A:B").ClearContents
+    With ta_wb.Worksheets(1)
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=r*", _
+        Operator:=xlAnd, Criteria2:="=*scb"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ta_ws.Range("A1")
+    End With
+    ta_wb.Close savechanges:=False
+    'Replace to format, then TA is done
+    With ta_ws
+        .Columns("A").Replace What:="scb", Replacement:=""
+        .Columns("A").Replace What:="r", Replacement:=""
+    End With
+
+    'Next, work on IP
+    With pos_rotor_ws
+        'Clear filters if there is any
+        If .FilterMode = True Then
+            .ShowAllData
+        End If
+        'refilter Finish, Status, Factory to SCB, In Production, HL
+        .Range("A:O").AutoFilter Field:=4, Criteria1:="SCB"
+        .Range("A:O").AutoFilter Field:=7, Criteria1:="In Production"
+        .Range("A:O").AutoFilter Field:=13, Criteria1:="HL"
+        'Copy & paste IP
+        .Range("B1:E" & .Range("D" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("I1")
+    'No RD for SCB, so no more copying
+    End With
+    'We are done copying, so close the POS workbook now
+    pos_wb.Close savechanges:=False
+    
+    'Now, need to put copied data in appropricate places
+    With ip_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        'Then, work on HL ones
+        'Filter Raybesto ones to align with Aimco ones
+        .Range("I1:L1").AutoFilter
+        With .AutoFilter.Sort
+            .SortFields.Clear
+            .SortFields.Add2 Key:=Range("J1"), Order:=xlDescending
+            .Apply
+        End With
+        'Copy it onto the Aimco column
+        .Range("J2:J" & .Range("J1048576").End(xlUp).Row).Copy .Range("I2")
+        'Remove duplicates and sumif
+        .Range("I2:I" & .Range("I1048576").End(xlUp).Row).Copy .Range("M2")
+        .Range("M2:M" & .Range("M1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("N2").FormulaR1C1 = "=SUMIF(C[-5],RC[-1],C[-2])"
+        .Range("N2").AutoFill Destination:=.Range("N2:N" & .Range("M1048576").End(xlUp).Row)
+        .Range("M2:N" & .Range("M1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("I:N").Delete
+    End With
+        
+End Sub
+Private Sub CDM()
+'
+'   It is for CDM Summary TA and IP update.
+'
+
+    'You may want to change your worksheets names here
+    Dim main_ws, cdm_ta_ws, cdp_ta_ws, tbt_ws, f1_ws As Worksheet
+    Set main_ws = wb.Worksheets("cdm")
+    Set cdm_ta_ws = wb.Worksheets("cdm_ta")
+    Set cdp_ta_ws = wb.Worksheets("cdp_ta")
+    Set tbt_ws = wb.Worksheets("tbt")
+    Set f1_ws = wb.Worksheets("f1")
+    
+    'Work on TA first
+    cdm_ta_ws.Columns("A:B").ClearContents
+    cdp_ta_ws.Columns("A:B").ClearContents
+    With ta_wb.Worksheets(1)
+        'Copy & paste CDM TA
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=p*", _
+        Operator:=xlAnd, Criteria2:="=*cdm"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy cdm_ta_ws.Range("A1")
+        'Now, same thing for CDP TA
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=p*", _
+        Operator:=xlAnd, Criteria2:="=*cdp"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy cdp_ta_ws.Range("A1")
+    End With
+    'We are done copying, so close the TA workbook
+    ta_wb.Close savechanges:=False
+    'Replace to format, then TA is done
+    With cdm_ta_ws
+        .Columns("A").Replace What:="cdm", Replacement:=""
+        .Columns("A").Replace What:="p", Replacement:=""
+    End With
+    With cdp_ta_ws
+        .Columns("A").Replace What:="cdp", Replacement:=""
+        .Columns("A").Replace What:="p", Replacement:=""
+    End With
+
+    'Next, work on IP
+    With pos_cdm_ws
+        'Clear filters if there is any
+        If .FilterMode = True Then
+            .ShowAllData
+        End If
+        'refilter Status and Factory, do Friction One first
+        .Range("A:K").AutoFilter Field:=4, Criteria1:="In Production"
+        .Range("A:k").AutoFilter Field:=8, Criteria1:="Friction One"
+        'Copy & paste IP
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy f1_ws.Range("D1")
+        'Then do TBT
+        .Range("A:k").AutoFilter Field:=8, Criteria1:="TBT"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy tbt_ws.Range("D1")
+    End With
+    'We are done copying, so close the POS workbook now
+    pos_wb.Close savechanges:=False
+    
+    'Now, need to put copied data in appropricate places
+    'F1 first
+    With f1_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        'Remove duplicates and sumif
+        .Range("D2:D" & .Range("D1048576").End(xlUp).Row).Copy .Range("F2")
+        .Range("F2:F" & .Range("F1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("G2").FormulaR1C1 = "=SUMIF(C[-3],RC[-1],C[-2])"
+        .Range("G2").AutoFill Destination:=.Range("G2:G" & .Range("F1048576").End(xlUp).Row)
+        .Range("F2:G" & .Range("F1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("D:G").Delete
+    End With
+    'TBT second
+    With tbt_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        'Remove duplicates and sumif
+        .Range("D2:D" & .Range("D1048576").End(xlUp).Row).Copy .Range("F2")
+        .Range("F2:F" & .Range("F1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("G2").FormulaR1C1 = "=SUMIF(C[-3],RC[-1],C[-2])"
+        .Range("G2").AutoFill Destination:=.Range("G2:G" & .Range("F1048576").End(xlUp).Row)
+        .Range("F2:G" & .Range("F1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("D:G").Delete
+    End With
+        
+End Sub
+Private Sub AFN()
+'
+'   It is for AFN Summary TA and IP update.
+'
+
+    'You may want to change your worksheets names here
+    Dim main_ws, ta_ws, ip_ws As Worksheet
+    Set main_ws = wb.Worksheets("AFN")
+    Set ta_ws = wb.Worksheets("ta")
+    Set ip_ws = wb.Worksheets("po")
+    
+    'Work on TA first
+    ta_ws.Columns("A:B").ClearContents
+    With ta_wb.Worksheets(1)
+        .Range("$A$1:$B$" & .Range("A" & Rows.Count).End(xlUp).Row).AutoFilter Field:=1, Criteria1:="=afn*"
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ta_ws.Range("A1")
+    End With
+    'TA is done, close it now
+    ta_wb.Close savechanges:=False
+
+    'Next, work on IP
+    With pos_afn_ws
+        'Clear filters if there is any
+        If .FilterMode = True Then
+            .ShowAllData
+        End If
+        'refilter Status only
+        .Range("A:K").AutoFilter Field:=4, Criteria1:="In Production"
+        'Copy & paste IP
+        .Range("A1:B" & .Range("A" & Rows.Count).End(xlUp).Row).SpecialCells(xlCellTypeVisible).Copy ip_ws.Range("D1")
+    End With
+    'We are done copying, so close the POS workbook now
+    pos_wb.Close savechanges:=False
+    
+    'Now, need to put copied data in appropricate places
+    With ip_ws
+        'Delete original data first
+        .Range("A2:B" & .Range("A1048576").End(xlUp).Row).ClearContents
+        'Remove duplicates and sumif
+        .Range("D2:D" & .Range("D1048576").End(xlUp).Row).Copy .Range("F2")
+        .Range("F2:F" & .Range("F1048576").End(xlUp).Row).RemoveDuplicates Columns:=1
+        .Range("G2").FormulaR1C1 = "=SUMIF(C[-3],RC[-1],C[-2])"
+        .Range("G2").AutoFill Destination:=.Range("G2:G" & .Range("F1048576").End(xlUp).Row)
+        .Range("F2:G" & .Range("F1048576").End(xlUp).Row).Copy
+        .Range("A2").PasteSpecial xlPasteValues
+        'Lastly, clear unneeded data
+        .Columns("D:G").Delete
+    End With
+        
+End Sub
