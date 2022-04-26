@@ -205,7 +205,7 @@ Sub Daily_3()
     
 '   This is to change the days elapsed and time manually
     Dim today, when As Long
-    today = InputBox("What is the date today? Format: YYYYMMDD", "Enter an integer", 20220111)
+    today = InputBox("What is the date today? Format: YYYYMMDD", "Enter an integer", 20000101)
     when = InputBox("What time was the original file created?", "Enter an integer", 715)
     
     'You may want to change your worksheets names, workbooks names and file directory here
