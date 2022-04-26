@@ -1,1 +1,1 @@
-It is for Summary TA and IP update. Pick a Summary of your choice, run the VBA, then you will have your Summary updated.
+It is for Summary TA and IP update. There are 6 Summary files, namely <ONZ.xlsx>, <CNZ.xlsx>, <SCB.xlsx>, <OCG.xlsx>, <AFN.xlsx>, and <CDM.xlsx>. You should pick one of them, run the VBA, then you will have your Summary updated.
