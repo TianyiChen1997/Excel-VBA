@@ -54,7 +54,7 @@ Sub Daily_1()
     Do While po_ws.Cells(i, 2).Value <> ""
         'starts at b2
         k = po_ws.Cells(i, 2).Value
-        Set findResult = purchased_ws.Range("A1:ZZ100").find(What:=k, LookIn:=xlValues)
+        Set findResult = purchased_ws.Range("A1:ZZ100").find(What:=k, SEARCHORDER:=xlByColumns, SEARCHDIRECTION:=xlNext, LookIn:=xlValues)
         'use this sub to check if the item can be found in purchased_ws
         Call find(findResult)
         i = i + 1
@@ -132,7 +132,7 @@ Private Sub find(findResult As Range)
             End If
         'if no restocks, try find another location
         Else
-            Set findResult = purchased_ws.Range(Cells(1, colnumber + 1), Cells(100, 676)).find(What:=k, LookIn:=xlValues)
+            Set findResult = purchased_ws.Range(Cells(1, colnumber + 1), Cells(100, 676)).find(What:=k, SEARCHORDER:=xlByColumns, SEARCHDIRECTION:=xlNext, LookIn:=xlValues)
             Call find(findResult)
         End If
     'if not found, then do nothing
