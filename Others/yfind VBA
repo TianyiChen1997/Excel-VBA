@@ -1,0 +1,35 @@
+Sub yfind()
+'
+'   This sub looks for "y" row by row and delete all rows without "y".
+'
+    
+    Dim i As Long
+    Dim findy As Range
+    
+    'use a while loop to go through every row
+    i = 2
+    Do While Cells(i, 1).Value <> ""
+        'if a row contains merged cells, then treat rows with merged cells as a whole
+        If Cells(i, 5).MergeCells = True Then
+            Set findy = Range(Cells(i, 1), Cells(i + Cells(i, 5).MergeArea.Rows.Count - 1, 10086)).find(what:="y")
+            ' if found, then do nothing
+            If Not findy Is Nothing Then
+                i = i + Cells(i, 5).MergeArea.Rows.Count - 1
+            'if not found, then delete all rows containing the merged cells
+            Else
+                Rows(i & ":" & i + Cells(i, 5).MergeArea.Rows.Count - 1).EntireRow.Delete
+                i = i - 1
+            End If
+        'if not contains merged cells, then just look at this one row
+        Else
+            Set findy = Range(Cells(i, 1), Cells(i, 10086)).find(what:="y")
+            'delete it if not found, otherwise do nothing
+            If Not findy Is Nothing Then
+            Else
+                Rows(i).EntireRow.Delete
+                i = i - 1
+            End If
+        End If
+        i = i + 1
+    Loop
+End Sub
