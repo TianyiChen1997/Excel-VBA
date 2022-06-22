@@ -13,9 +13,3 @@ Note: All files are uploaded for demonstration purpose only. They are the simpli
 * "Summary TA IP" for TA and IP update for any of the Summary Excel files
 
 * More VBA code in the "Others" folder
-
-## Working On:
-
-* Thinking...
-
-
