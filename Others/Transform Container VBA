@@ -1,0 +1,90 @@
+Sub transform_container()
+'
+'   This sub transforms the format of the original container sheet.
+'   It changes the original multiple container columns to a single column, and
+'   changes the original single date column to multiple columns while keeping everything else the same.
+'
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    'You may want to change finish name, file directory, or file name here
+    Dim finish_name, file_dir, ca_name As String
+    Dim new_ws, ws As Worksheet
+    Dim ca_wb As Workbook
+    Dim i, coly As Long
+    Dim mergedrow, j As Integer
+    Dim foundy, founddate As Range
+    
+    finish_name = "OCG"
+    file_dir = "C:\Users\rustyw\Desktop\"
+    ca_name = "Container_Arrangement.xlsx"
+    Set new_ws = ActiveSheet
+    Set ca_wb = Workbooks.Open(file_dir & ca_name)
+    Set ws = ca_wb.Worksheets(finish_name)
+    
+    
+    'Copy & paste part,po,finish,skid,qty
+    With ws
+        .Columns("D:D").Copy new_ws.Range("B1")
+        .Columns("b:c").Copy new_ws.Range("C1")
+        .Columns("E:F").Copy new_ws.Range("E1")
+        .Columns("A:A").Copy new_ws.Range("G1")
+    End With
+    
+    'Copy & paste date to match the desired format
+    With new_ws
+        .Range("G:G").RemoveDuplicates Columns:=1, Header:=xlYes
+        .Range("G2:G" & .Range("G" & Rows.Count).End(xlUp).Row).Copy
+        .Range("I1").PasteSpecial Transpose:=True
+        .Columns("G:G").Delete
+        .Range("A1").Value = "id"
+        .Range("G1").Value = "container"
+    End With
+
+    
+    'Now, we want to find the container name and put "y" under the correct date column
+    'Use a while loop to run trough every row
+    i = 2
+    Do While new_ws.Cells(i, 2).Value <> ""
+        'If the row contains merged cells, then treat rows with merged cells as a whole
+        If new_ws.Cells(i, 5).MergeCells = True Then
+            'Get the number of rows that are merged
+            mergedrow = new_ws.Cells(i, 5).MergeArea.Rows.Count
+            'Locate the "y"
+            Set foundy = ws.Range(ws.Cells(i, 1), ws.Cells(i + mergedrow - 1, 10086)).find(what:="y")
+            'Also need to look for the date in the new worksheet
+            Set founddate = new_ws.Range(new_ws.Cells(1, 1), new_ws.Cells(1, 10086)).find(what:=ws.Cells(i, 1).Value)
+            'Get the "y" column
+            coly = foundy.Column
+            'Copy the container name in the found column
+            ws.Cells(1, coly).Copy
+            'And paste it into the container column in the new worksheet
+            'Use the for loop to paste it onto every merged row while putting "y" under the correct date
+            For j = 1 To mergedrow
+                new_ws.Cells(i + j - 1, 7).PasteSpecial xlPasteValues
+                new_ws.Cells(i + j - 1, founddate.Column).Value = "y"
+            Next j
+            'We are done with all the merged rows, so skip them
+            i = i + mergedrow - 1
+        'If the row is on its own
+        Else
+            'Similar and simplier than before, we need to locate the "y" and date
+            Set foundy = ws.Range(ws.Cells(i, 1), ws.Cells(i, 10086)).find(what:="y")
+            Set founddate = new_ws.Range(new_ws.Cells(1, 1), new_ws.Cells(1, 10086)).find(what:=ws.Cells(i, 1).Value)
+            'Get the "y" column
+            coly = foundy.Column
+            'Copy the container name in the found column
+            ws.Cells(1, coly).Copy
+            'And paste it into the container column in the new worksheet
+            new_ws.Cells(i, 7).PasteSpecial xlPasteValues
+            'Put "y" under the correct date
+            new_ws.Cells(i, founddate.Column).Value = "y"
+        End If
+        'Move to the next row
+        i = i + 1
+    Loop
+
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+End Sub
