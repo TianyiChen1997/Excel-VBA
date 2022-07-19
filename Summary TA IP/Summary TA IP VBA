@@ -1,4 +1,4 @@
-Private day, finish, file_dir, pos_file_dir As String
+Private day, finish, file_dir As String
 Private ta_wb, pos_wb, wb As Workbook
 Private pos_rotor_ws, pos_cdm_ws, pos_afn_ws As Worksheet
 
@@ -21,8 +21,7 @@ Sub Summary_TA_IP()
     End If
     
     'You may want to change your worksheets names, workbooks names and file directory here
-    file_dir = "C:\Users\rustyw\Desktop\"
-    pos_file_dir = "C:\Users\rustyw\Dropbox\Purchasing\PO Status\"
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\summary_ta_ip\"
     Set wb = ActiveWorkbook
     Set pos_wb = Workbooks.Open(file_dir & "POS_" & day & ".xlsx")
     Set ta_wb = Workbooks.Open(file_dir & "ta.csv")
