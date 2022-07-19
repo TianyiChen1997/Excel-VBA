@@ -20,15 +20,14 @@ Sub Daily_1()
     Dim item As Range
     Dim qbp_wb As Workbook
     Dim wo_ws As Worksheet
-    Dim file_dir, purchased_parts_file_dir As String
+    Dim file_dir As String
     
-    file_dir = "C:\Users\rustyw\Desktop\"
-    purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\daily po\"
     p_wb_name = "Purchased Parts (Pad + Rotor).xlsx"
     p_ws_name = "PAD & ROTOR"
     Set po_wb = ActiveWorkbook
     Set qbp_wb = Workbooks.Add
-    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & p_wb_name)
+    Set purchased_wb = Workbooks.Open(file_dir & p_wb_name)
     Set wo_ws = po_wb.Worksheets("PURCHASE WORK ORDERS")
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
     Set purchased_ws = purchased_wb.Worksheets(p_ws_name)
@@ -151,7 +150,7 @@ Sub Daily_2()
     Dim top100 As Workbook
     Dim file_dir As String
     
-    file_dir = "C:\Users\rustyw\Desktop\"
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\daily po\"
     Set po_wb = ActiveWorkbook
     Set top100 = Workbooks.Open(file_dir & "pads_hardware.xlsx")
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
@@ -213,7 +212,7 @@ Sub Daily_3()
     Dim ori_po_ws, ori_wo_ws As Worksheet
     Dim file_dir As String
     
-    file_dir = "\\MAX-DRIVE\Public\Rui\Daily Reports\"
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\daily po\"
     Set po_wb = ActiveWorkbook
     Set po_ws = po_wb.Worksheets("PURCHASE ORDERS")
     Set ori_po_wb = Workbooks.Open(file_dir & "po_wo_" & today & "-0" & when & "S.xlsx")
