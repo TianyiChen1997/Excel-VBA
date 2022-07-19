@@ -1,7 +1,7 @@
 # What this VBA does
 It is for daily purchase. It indicates which orders are bought already, and updates them in the <Purchased Parts (Pad + Rotor).xlsx> excel workbook automatically. If not bought, then generates a new workbook called <qbp.csv> and a list to search them easily on other websites. 
 
-# What this file contains
+# What this folder contains
 Daily PO VBA : It is the VBA to run.\
 po_wo_20000101.xlsx : It is the main file to run the VBA in.\
 All other excel files : They need to be downloaded in the same folder, and may remain closed before running the VBA.
