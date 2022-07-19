@@ -9,6 +9,6 @@ Purchased Parts (Pad + Rotor).xlsx, po_wo_20000101-0715S.xlsx, and pads_hardware
 # How it works
 1. Make sure all the excel files are downloaded in the same folder, and make sure the file_dir in the VBA has changed correspondingly. 
 2. Open <po_wo_20010101.xlsx>.
-3. Run sub "Daily_1", then search orders on QBP using the newly generated <qbp.csv>.
-4. Run sub "Daily_2" to generate the list needed for Transbec search.
-5. Run sub "Daily_3" to copy & paste data to workbook <po_wo_20010101-0715S.xlsx> and color them.
+3. Run sub "Daily_1", then search orders on QBP using the newly generated <qbp.csv>. Enter "QBP" in column E for each item found on the QBP website.
+4. Run sub "Daily_2" to generate the list needed for Transbec search. Use the list in column G to J to search items on Transbec, and enter "Transbec" in column E if the item is found. If not found on QBP nor on Transbec, then enter "N/A".
+5. Run sub "Daily_3" to copy & paste data to workbook <po_wo_20010101-0715S.xlsx> and color them. You may now open <po_wo_20010101-0715S.xlsx> to double check if the information is entered correctly.
