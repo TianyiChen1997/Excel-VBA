@@ -2,9 +2,9 @@
 It is for daily purchase. It indicates which orders are bought already, and updates them in the <Purchased Parts (Pad + Rotor).xlsx> excel workbook automatically. If not bought, then generates a new workbook called <qbp.csv> and a list to search them easily on other websites. 
 
 # What this file contains
-Daily PO VBA: It is the VBA to run.\
-po_wo_20000101.xlsx: It is the main file to run the VBA in.\
-Purchased Parts (Pad + Rotor).xlsx, po_wo_20000101-0715S.xlsx, and pads_hardware.xlsx: They need to be downloaded in the same folder, and may remain closed before running the VBA.
+Daily PO VBA : It is the VBA to run.\
+po_wo_20000101.xlsx : It is the main file to run the VBA in.\
+all other excel files : They need to be downloaded in the same folder, and may remain closed before running the VBA.
 
 # How it works
 1. Make sure all the excel files are downloaded in the same folder, and make sure the file_dir in the VBA has changed correspondingly. 
