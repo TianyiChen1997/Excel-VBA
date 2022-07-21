@@ -17,7 +17,7 @@ Sub transform_container()
     Dim foundy, founddate As Range
     
     finish_name = "OCG"
-    file_dir = "C:\Users\rustyw\Desktop\"
+    file_dir = "C:\Users\"
     ca_name = "Container_Arrangement.xlsx"
     Set new_ws = ActiveSheet
     Set ca_wb = Workbooks.Open(file_dir & ca_name)
