@@ -23,16 +23,15 @@ Private Sub Pad_Cleanup()
 '   You may want to change your worksheets names, workbooks names and file directory here
     Dim summary_ws, buy_ws, ta_ws, cdm_ta_ws, afn_ta_ws, cdp_ta_ws, cdm_pbi_ws, afn_pbi_ws, pad_rotor, p_ws As Worksheet
     Dim main_wb, ta_wb, cdm_wb, afn_wb, purchased_wb As Workbook
-    Dim file_dir, purchased_parts_file_dir As String
+    Dim file_dir As String
     Dim last_row, row_count As Long
     
-    file_dir = "C:\Users\rustyw\Desktop\"
-    purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\weekly restock\"
     Set ta_wb = Workbooks.Open(file_dir & "ta.csv")
     Set cdm_wb = Workbooks.Open(file_dir & "cdm.csv")
     Set afn_wb = Workbooks.Open(file_dir & "afn.csv")
-    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & "Purchased Parts (Pad + Rotor).xlsx")
-    Set main_wb = Workbooks("PAD Summary")
+    Set purchased_wb = Workbooks.Open(file_dir & "Purchased Parts (Pad + Rotor).xlsx")
+    Set main_wb = Workbooks("Pad_Summary")
     Set summary_ws = main_wb.Worksheets("PAD Summary")
     Set buy_ws = main_wb.Worksheets("Pad Restock")
     Set ta_ws = main_wb.Worksheets.Add
@@ -243,8 +242,8 @@ Private Sub Pad_Buy()
     Dim last_row, last_row_buy As Long
     Dim file_dir As String
     
-    file_dir = "C:\Users\rustyw\Desktop\"
-    Set main_wb = Workbooks("PAD Summary")
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\weekly restock\"
+    Set main_wb = Workbooks("Pad_Summary")
     Set top100 = Workbooks.Open(file_dir & "pads_hardware.xlsx")
     Set summary_ws = main_wb.Worksheets("PAD Summary")
     Set buy_ws = main_wb.Worksheets("Pad Restock")
