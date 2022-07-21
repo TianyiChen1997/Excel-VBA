@@ -23,16 +23,15 @@ Private Sub Rotor_Cleanup()
 '   You may want to change your worksheets names, workbooks names and file directory here
     Dim summary_ws, buy_ws, ta_ws, onz_ta_ws, cnz_ta_ws, onz_pbi_ws, cnz_pbi_ws, pad_rotor, p_ws As Worksheet
     Dim main_wb, ta_wb, onz_wb, cnz_wb, purchased_wb As Workbook
-    Dim file_dir, purchased_parts_file_dir As String
+    Dim file_dir As String
     Dim last_row, row_count As Long
     
-    file_dir = "C:\Users\rustyw\Desktop\"
-    purchased_parts_file_dir = "\\MAX-DRIVE\Public\David\"
+    file_dir = "C:\Users\busiz\OneDrive\Desktop\weekly restock\"
     Set ta_wb = Workbooks.Open(file_dir & "ta.csv")
     Set onz_wb = Workbooks.Open(file_dir & "onz.csv")
     Set cnz_wb = Workbooks.Open(file_dir & "cnz.csv")
-    Set purchased_wb = Workbooks.Open(purchased_parts_file_dir & "Purchased Parts (Pad + Rotor).xlsx")
-    Set main_wb = Workbooks("Rotor Summary")
+    Set purchased_wb = Workbooks.Open(file_dir & "Purchased Parts (Pad + Rotor).xlsx")
+    Set main_wb = Workbooks("Rotor_Summary")
     Set summary_ws = main_wb.Worksheets("ROTOR SUMMARY")
     Set buy_ws = main_wb.Worksheets("Buy")
     Set ta_ws = main_wb.Worksheets.Add
@@ -214,7 +213,7 @@ Private Sub Rotor_Buy()
     Dim main_wb As Workbook
     Dim last_row As Long
     
-    Set main_wb = Workbooks("Rotor Summary")
+    Set main_wb = Workbooks("Rotor_Summary")
     Set summary_ws = main_wb.Worksheets("ROTOR SUMMARY")
     Set buy_ws = main_wb.Worksheets("Buy")
     last_row = summary_ws.Range("A" & Rows.Count).End(xlUp).Row
