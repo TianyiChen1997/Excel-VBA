@@ -1,6 +1,6 @@
 # Excel VBA Overview
 
-I write VBA code to automate some of my repetitive daily work.
+I write VBA code for process automation, report automation, table template conversion automation, and more.
 
 Note: All files are uploaded for demonstration purpose only. They are the simplified version of the original files, and all numbers in the files are randomly generated.
 
